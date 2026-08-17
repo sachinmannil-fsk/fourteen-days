@@ -224,6 +224,8 @@ p{color:var(--ink-2);margin:0 0 8px;font-size:clamp(17px,2.35vh,20px);font-weigh
 .lbrow.lead{border-color:var(--amber);border-width:3px;background:var(--amber-bg)}
 .rank{font-family:var(--mono);font-size:clamp(16px,2.35vh,20px);color:var(--muted);width:28px}
 .lbrow.lead .rank{color:var(--amber)}
+.lbmid{display:flex;flex-direction:column;align-items:flex-end;gap:2px;min-width:0}
+.lbchoice{font-family:var(--mono);font-size:clamp(13px,1.85vh,16px);color:var(--ink-2);font-weight:600;white-space:nowrap}
 .lbname{flex:1;font-size:clamp(21px,3.65vh,33px);font-weight:800;letter-spacing:-.02em}
 .lbdelta{font-family:var(--mono);font-size:clamp(15px,2.25vh,19px);color:var(--muted)}
 .lbtotal{font-family:var(--mono);font-size:clamp(27px,5.05vh,47px);font-weight:600;font-variant-numeric:tabular-nums}
@@ -573,21 +575,23 @@ const STATES=[
  {id:'nobreak',name:'No breaks at all — work straight through',h:-1,e:-10}
 ];
 const EVENTS=[
- {id:'parent',text:'A parent is unwell and admitted to hospital. Lose 3 hours this round.',h:-3,e:0},
+ {id:'parent',text:'A parent is unwell and admitted to hospital. Lose 3 hours this round. The school grants you an extension — this round\u2019s deadlines move to the final weekend.',h:-3,e:0,ext:true},
  {id:'friend',text:'A close friend is struggling and needs you. Lose 2 hours. If you play "Time with friends or family" this round, gain 5 points.',h:-2,e:0,bonus:'people'},
  {id:'home',  text:'A serious argument at home. Lose 2 hours, and it stays with you.',h:-2,e:-10},
- {id:'sick',  text:'You fall ill. Lose 4 hours.',h:-4,e:0},
- {id:'extra', text:'An unexpected extra test is announced at tuition. Lose 3 hours.',h:-3,e:0}
+ {id:'sick',  text:'You fall ill. Lose 4 hours. The school grants you an extension — this round\u2019s deadlines move to the final weekend.',h:-4,e:0,ext:true},
+ {id:'extra', text:'An unexpected extra test is announced. Lose 3 hours.',h:-3,e:0}
 ];
 const BRIEF=[
  {say:`<p><b>This is a strategy game.</b></p><p>There is a leaderboard. At the end I will show you exactly how the points worked and why.</p>`,note:''},
+ {say:`<p>This is not the first week of term.</p><p><b>It is week ten.</b></p><p class="quiet">Everyone has work behind them and a term ahead. Same for every team.</p>`,
+  note:'Nobody starts clean. That is the point — and it is why the backlog card exists.'},
  {say:`<p>Your team is running <b>one Grade 12 student</b> through fourteen days.</p><p>Same calendar you have. <em>The deadlines do not clash.</em></p>`,note:'Everyone needs a calendar and a full set of cards before the next screen.'},
  {say:`<p>Four rounds.</p><p><em>Two are weekdays.</em> About eleven hours each.</p><p><em>Two are weekends.</em> Up to seventeen.</p>`,note:''},
- {say:`<p>Task cards earn points. <span class="quiet">Life cards do not.</span></p><p>Tuition homework is compulsory. Three hours, every round.</p><p><b>Highest total after fourteen days wins.</b></p>`,note:'Questions about the scoring get one answer: figure it out.'},
+ {say:`<p>Task cards earn points. <span class="quiet">Life cards do not.</span></p><p>Homework is compulsory. Three hours, every round.</p><p><b>Highest total after fourteen days wins.</b></p>`,note:'Questions about the scoring get one answer: figure it out.'},
  {say:`<p>Each round you decide together, then tell me what you played.</p><p class="quiet">This is what I will be filling in.</p>`,
   body:`<div class="statbox" style="margin:0">
    <div class="legrow"><span class="legkey"><span class="h tui"></span><span class="h tui"></span><span class="h tui"></span></span>
-    <span class="legtxt"><b>Tuition homework.</b> Three hours, gone before you start. You cannot change these.</span></div>
+    <span class="legtxt"><b>Homework.</b> Three hours, gone before you start. You cannot change these.</span></div>
    <div class="legrow"><span class="legkey"><span class="h task"></span><span class="h task"></span></span>
     <span class="legtxt"><b>Hours you spend on work.</b></span></div>
    <div class="legrow"><span class="legkey"><span class="h state"></span></span>
@@ -607,7 +611,7 @@ const BRIEF=[
 ];
 const ROUNDS=[
  {n:1,days:'Days 1–5',sub:'Monday to Friday',we:false,burst:'ROUND 1',bsub:'Monday to Friday',
-  speech:`<p><b>Eleven hours</b> across five days. About two a night.</p><p>Tuition takes three of them before you start.</p>`},
+  speech:`<p><b>Eleven hours</b> across five days. About two a night.</p><p>Homework takes three of them before you start.</p>`},
  {n:2,days:'Days 6–7',sub:'THE WEEKEND',we:true,burst:'WEEKEND',bsub:'Days 6 and 7',
   speech:`<p>Two free days. <em>Up to seventeen hours.</em></p><p>More than the entire week you just played.</p>`},
  {n:3,days:'Days 8–12',sub:'Monday to Friday',we:false,burst:'ROUND 3',bsub:'Open your envelopes',
@@ -660,14 +664,14 @@ function fresh(names){
   const ev=shuffle(EVENTS.map(e=>e.id));
   return{round:1,phase:'setup',activeTeam:0,briefStep:0,dStep:0,scriptStep:0,
    teams:names.map((n,i)=>({name:n,color:COLORS[i%COLORS.length],energy:100,hist:[100],
-    total:0,scores:[],gross:[],pens:[],weekend:[],played:{},sleepLog:{},event:ev[i%ev.length],
-    backlogDone:false,done:{},missed:[],entry:{tasks:{},states:{},sleep:'normal'}}))};
+    total:0,scores:[],gross:[],pens:[],logs:[],weekend:[],played:{},sleepLog:{},event:ev[i%ev.length],
+    backlogDone:false,ext:false,done:{},missed:[],entry:{tasks:{},states:{},sleep:'normal'}}))};
 }
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 /* Progress is saved in the browser on this device only.
    Uses localStorage when available (normal hosting or a local file),
    and falls back to the Claude storage API when running inside Claude. */
-const SKEY='fourteendays:v29';
+const SKEY='fourteendays:v30';
 const HAS_LS=(()=>{try{const k='__t';localStorage.setItem(k,'1');localStorage.removeItem(k);return true;}catch(e){return false;}})();
 async function save(){
   const v=JSON.stringify(S);
@@ -727,7 +731,8 @@ el('briefPrev').onclick=()=>{S.briefStep--;save();renderBrief();};
 
 /* ================= ROUND ================= */
 function taskCost(t,r,tm){return(t.creep&&r>=3&&!tm.backlogDone)?4:t.h;}
-const taskAvail=(t,r,tm)=>(!t.from||r>=t.from)&&r<=t.due&&tm.done[t.id]!=='full';
+const dueFor=(t,tm)=>t.due+((tm&&tm.ext&&t.due===3)?1:0);
+const taskAvail=(t,r,tm)=>(!t.from||r>=t.from)&&r<=dueFor(t,tm)&&tm.done[t.id]!=='full';
 const eventFor=t=>EVENTS.find(e=>e.id===t.event);
 const sleepOpt=id=>SLEEP.find(s=>s.id===id);
 function baseAccess(tm,r){const R=ROUNDS[r-1];let a=accessFor(tm.energy,R.we);if(r===3)a+=eventFor(tm).h;return Math.max(0,a);}
@@ -816,9 +821,10 @@ function renderEntry(){
     <div class="ehead">
       <div><h3 style="margin:0;font-size:clamp(14px,1.36vh,15px)">${tm.name}</h3>
       <span class="small dim mono">${used} of ${avail} hours${ev?' · '+ev.h+' from envelope':''}</span></div>
-      <span class="locked">Tuition 3h · 6pt</span></div>
+      <span class="locked">Homework 3h · 6pt</span></div>
     <div class="hourbar">${bar}</div>
     ${ev?`<p class="small" style="margin:0;color:var(--coral)">${ev.text}</p>`:''}
+    ${tm.ext?`<p class="small" style="margin:0;color:var(--teal);font-weight:700">Extension granted — Round 3 deadlines run to the final weekend.</p>`:''}
     <div class="seclbl">Task cards</div>
     <div class="escroll">
       ${TASKS.filter(t=>taskAvail(t,r,tm)).sort((a,b)=>(a.due===r?0:1)-(b.due===r?0:1)).map(t=>{
@@ -827,7 +833,7 @@ function renderEntry(){
         const restH=t.part?t.h-t.part.h:c, restP=t.part?t.pts-t.part.pts:t.pts;
         const back=cur==='full'?c:cur==='part'?t.part.h:cur==='finish'?restH:0;
         const cf=used-back+c<=avail, cp=t.part&&(used-back+t.part.h<=avail), cfin=used-back+restH<=avail;
-        const dn=t.due===r&&t.day!=='no deadline';
+        const dn=dueFor(t,tm)===r&&t.day!=='no deadline';
         if(started) return`<div class="crow ${dn?'duenow':''}"><div class="cname">${t.name}
           <span class="tag half">half done</span> <span class="sub">(finish: ${restH}h · +${restP}pt)</span></div>
           <button class="pick ${cur==='finish'?'on':''}" data-task="${t.id}" data-mode="finish" ${(!cfin&&cur!=='finish')?'disabled':''}>Finish</button></div>`;
@@ -888,13 +894,21 @@ function scoreRound(){
     for(const id in e.states){const st=STATES.find(x=>x.id===id);dE+=st.e*e.states[id];t.played[id]=(t.played[id]||0)+e.states[id];}
     dE-=EPH*workH;
     let bns=0;
-    if(r===3){const ev=eventFor(t);dE+=ev.e;if(ev.bonus&&(e.states[ev.bonus]||0)>0)bns=5;}
+    if(r===3){const ev=eventFor(t);dE+=ev.e;if(ev.ext)t.ext=true;if(ev.bonus&&(e.states[ev.bonus]||0)>0)bns=5;}
     for(const id in e.tasks)t.done[id]=(e.tasks[id]==='part')?'part':'full';
     let pen=0;
-    TASKS.forEach(T=>{if(T.due===r&&!t.done[T.id]&&T.day!=='no deadline'){t.missed.push(T.id);pen+=MISS;}});
+    TASKS.forEach(T=>{if(dueFor(T,t)===r&&!t.done[T.id]&&T.day!=='no deadline'){t.missed.push(T.id);pen+=MISS;}});
     if(R.we)t.weekend.push({avail:17,reach:base+bonus,used:usedHours(t,r)});
     t.energy=Math.max(0,Math.min(100,t.energy+dE));
     t.hist.push(t.energy);
+    const recH=STATES.filter(x=>x.rec).reduce((a,x)=>a+(e.states[x.id]||0),0);
+    const bits=[(workH-TUITION_H)+'h work'];
+    if(recH)bits.push(recH+'h recovery');
+    if(sl.id==='protect')bits.push('protected sleep');
+    if(sl.id==='cut')bits.push('cut sleep');
+    if(e.states.nobreak)bits.push('no breaks');
+    if((e.states.scroll||0)>0)bits.push((e.states.scroll)+'h phone');
+    t.logs.push(bits.join(' · '));
     const g=Math.round(pts*multFor(t.energy))+bns;
     const sc=g-pen;
     t.gross.push(g);t.pens.push(pen);t.scores.push(sc);t.total+=sc;
@@ -912,7 +926,8 @@ function renderStand(){
    <div class="lbrow ${i===0?'lead':''}" style="animation-delay:${i*.08}s">
    <span class="rank">${String(i+1).padStart(2,'0')}</span>
    <span class="lbname">${t.name}</span>
-   <span class="lbdelta">earned +${t.gross[t.gross.length-1]}${t.pens[t.pens.length-1]?` · <span style="color:var(--coral)">missed −${t.pens[t.pens.length-1]}</span>`:''}</span>
+   <span class="lbmid"><span class="lbchoice">${t.logs[t.logs.length-1]||''}</span>
+   <span class="lbdelta">earned +${t.gross[t.gross.length-1]}${t.pens[t.pens.length-1]?` · <span style="color:var(--coral)">missed −${t.pens[t.pens.length-1]}</span>`:''}</span></span>
    <span class="lbtotal" data-to="${t.total}">0</span></div>`).join('');
   document.querySelectorAll('.lbtotal').forEach((el,i)=>setTimeout(()=>countUp(el,+el.dataset.to,700),180+i*80));
   el('standSpeech').innerHTML=STAND_SPEECH[S.round-1];
@@ -1197,7 +1212,7 @@ function strikeSheet(nm){
   return `<div class="psheet">
    <div class="phead"><h2>Fourteen Days — team sheet</h2><span class="pteam">${nm.toUpperCase()}</span></div>
    ${calTable()}
-   <p class="pnote"><b>None of these deadlines clash.</b> Tuition homework is compulsory every round and takes the first 3 hours.
+   <p class="pnote"><b>This is week ten of term, not week one.</b> None of these deadlines clash. Homework is compulsory every round and takes the first 3 hours.
    <b>Missing a deadline costs ${MISS} points.</b> Hours do not carry over — whatever you do not spend is gone.</p>
 
    <div class="sectitle">Hours — cross one box per hour you spend <span>grey = tuition, already gone</span></div>
@@ -1221,7 +1236,7 @@ function strikeSheet(nm){
 }
 /* ---------- CUT CARDS: full-width strips, straight horizontal cuts ---------- */
 function taskStrips(){
-  let h=`<div class="strip tui"><span class="sname">Tuition homework
+  let h=`<div class="strip tui"><span class="sname">Homework
       <small>compulsory — played automatically every round</small></span>
       <span class="scost">3 hrs · 6 pts</span><span class="sdue">EVERY ROUND</span></div>`;
   TASKS.forEach(t=>{
@@ -1262,7 +1277,7 @@ function renderPrint(mode){
     list.forEach(nm=>{
       out+=`<div class="psheet"><div class="phead"><h2>Calendar &amp; task cards</h2>
         <span class="pteam">${nm.toUpperCase()}</span></div>${calTable()}
-        <p class="pnote"><b>None of these deadlines clash.</b> Tuition is compulsory and takes 3 hours every round.
+        <p class="pnote"><b>None of these deadlines clash.</b> Homework is compulsory and takes 3 hours every round.
         <b>Missing a deadline costs ${MISS} points.</b></p>
         <div class="sectitle">Task cards <span>cut straight across every dashed line</span></div>
         ${taskStrips()}</div>`;
