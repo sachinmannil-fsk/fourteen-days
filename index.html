@@ -1,0 +1,1311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fourteen Days</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F7F5F0;--panel:#FFFFFF;--panel-2:#F0EEE8;--line:#C2BAA6;--line-2:#8F8571;
+  --ink:#100E0B;--ink-2:#22201A;--muted:#3D3830;
+  --amber:#C2620A;--amber-bg:#FEF3C7;
+  --teal:#0F766E;--teal-bg:#CCFBF1;
+  --coral:#C81E1E;--coral-bg:#FEE2E2;
+  --violet:#6D28D9;--violet-bg:#EDE9FE;
+  --blue:#1D4ED8;--blue-bg:#DBEAFE;
+  --r:10px;--mono:'IBM Plex Mono',ui-monospace,monospace;--disp:'Archivo',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--ink);font-family:var(--disp);line-height:1.4;-webkit-font-smoothing:antialiased}
+button{font-family:inherit}
+
+/* ===== APP SHELL: fixed viewport, never scrolls ===== */
+#app{display:flex;flex-direction:column;height:100vh;height:100dvh}
+.bar{flex:0 0 auto;background:var(--bg);border-bottom:2px solid var(--line);z-index:60}
+.bar-in{max-width:1320px;margin:0 auto;width:100%;padding:.7vh 22px;display:flex;align-items:center;gap:12px}
+.brand{font-weight:900;letter-spacing:-.03em;font-size:clamp(18px,2.55vh,22px)}
+.brand span{color:var(--amber)}
+.crumb{font-family:var(--mono);font-size:clamp(14px,1.85vh,15.5px);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);padding:3px 9px;border-radius:99px;background:var(--panel);white-space:nowrap}
+.bar-sp{flex:1}
+.tbtn{background:var(--panel);border:1px solid var(--line);color:var(--ink-2);padding:4px 10px;border-radius:99px;font-size:clamp(15px,2.05vh,17px);cursor:pointer;white-space:nowrap}
+.tbtn:hover{border-color:var(--line-2)}
+
+main{flex:1;min-height:0;display:flex;flex-direction:column}
+.screen{display:none;flex:1;min-height:0;flex-direction:column}
+.screen.on{display:flex;animation:fadeUp .3s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.stage{flex:1;min-height:0;overflow-y:auto;max-width:1320px;width:100%;margin:0 auto;padding:2.2vh 22px 1vh;display:flex;flex-direction:column}
+.stage.scrolly{overflow-y:auto}
+.foot{flex:0 0 auto;border-top:2px solid var(--line);background:var(--panel-2)}
+.foot-in{max-width:1320px;margin:0 auto;width:100%;padding:1vh 22px;display:flex;align-items:center;gap:14px;flex-wrap:nowrap}
+.foot-left{flex:1;min-width:0;display:flex;align-items:center;gap:14px}
+.foot-right{flex:0 0 auto;display:flex;align-items:center;gap:10px;justify-content:flex-end}
+.foot-right .btn{min-width:128px;text-align:center}
+.foot-right .btn.sm{min-width:112px}
+.note{flex:1;min-width:0;font-size:clamp(16px,2.2vh,18.5px);color:var(--ink-2);line-height:1.35}
+.note:empty{display:none}
+.minitimer{font-family:var(--mono);font-size:clamp(25px,4.05vh,37px);font-weight:600;font-variant-numeric:tabular-nums;color:var(--ink);letter-spacing:-.02em;flex:0 0 auto}
+.minitimer.warn{color:var(--amber)}
+@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:.2}}
+.minitimer.out{color:var(--coral);animation:blink 1s step-end infinite}
+.credit{font-family:var(--mono);font-size:clamp(16px,2.25vh,19px);letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted);margin-top:.6vh;font-weight:500}
+.legrow{display:flex;align-items:center;gap:14px;padding:.75vh 0;border-bottom:1px solid var(--line)}
+.legrow:last-child{border-bottom:0}
+.legkey{flex:0 0 108px;display:flex;gap:4px;align-items:center;justify-content:flex-start}
+.legtxt{font-size:clamp(16px,2.3vh,20px);color:var(--ink-2);line-height:1.3;font-weight:600}
+.legtxt b{color:var(--ink)}
+.takes{display:flex;flex-direction:column;gap:.5vh}
+.takes>div{display:flex;gap:9px;align-items:flex-start;font-size:clamp(16px,2.2vh,19px);color:var(--ink-2);line-height:1.3;font-weight:600}
+.takes b{color:var(--ink)}
+.tn{flex:0 0 auto;width:19px;height:19px;border-radius:50%;background:var(--amber);color:#fff;
+  font-family:var(--mono);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;margin-top:1px}
+.rrow{display:flex;gap:12px;align-items:flex-start;padding:.85vh 0;border-bottom:1px solid var(--line)}
+.rrow:last-child{border-bottom:0}
+.rnum{flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:var(--teal);color:#fff;
+  font-family:var(--mono);font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;margin-top:1px}
+.rtxt{font-size:clamp(15.5px,2.2vh,19px);color:var(--ink-2);line-height:1.35;font-weight:600}
+.rtxt b{color:var(--ink)}
+.rtxt .quiet{color:var(--muted);font-style:italic}
+.cyclekey{margin-top:1vh;display:flex;flex-direction:column;gap:.45vh}
+.cyclekey div{font-size:clamp(15.5px,2.15vh,18.5px);color:var(--ink-2);line-height:1.3;display:flex;align-items:baseline;gap:8px;font-weight:600}
+.cyclekey b{color:var(--ink)}
+.cyclekey em{font-style:normal;color:var(--teal);font-weight:700}
+.ck{flex:0 0 auto;width:11px;height:11px;border-radius:3px;display:inline-block;transform:translateY(1px)}
+.dleft{display:flex;flex-direction:column;justify-content:center;min-height:0;gap:2.4vh}
+.srcnote{flex:0 0 auto;max-width:46ch;padding-top:1.1vh;border-top:1px solid var(--line);
+  font-family:var(--mono);font-size:clamp(12px,1.6vh,14px);color:var(--muted);line-height:1.35;font-style:italic}
+.srcnote:empty{display:none}
+.srcnote b{color:var(--ink);font-weight:700;font-style:italic}
+.srcnote em{font-style:normal;color:var(--ink-2);font-weight:500}
+.foot-note{font-size:clamp(15px,2.05vh,17.5px);color:var(--muted);border-top:1px solid var(--line);padding-top:.7vh;margin-top:.9vh}
+
+/* ===== FX ===== */
+#fx{position:fixed;inset:0;pointer-events:none;z-index:100;overflow:hidden}
+.speed{position:absolute;inset:0;opacity:0}
+.speed span{position:absolute;left:50%;top:50%;width:2px;height:160vh;
+  background:linear-gradient(180deg,transparent,var(--amber),transparent);transform-origin:center;opacity:.28}
+@keyframes speedIn{0%{opacity:0;transform:scale(.4)}25%{opacity:1}100%{opacity:0;transform:scale(1.9)}}
+.speed.go{animation:speedIn .55s ease-out}
+.flash{position:absolute;inset:0;background:var(--ink);opacity:0}
+@keyframes flashHit{0%{opacity:0}8%{opacity:.13}100%{opacity:0}}
+.flash.go{animation:flashHit .42s ease-out}
+@keyframes shake{0%,100%{transform:translate(0,0)}20%{transform:translate(-5px,3px)}
+ 40%{transform:translate(4px,-3px)}60%{transform:translate(-3px,-2px)}80%{transform:translate(3px,3px)}}
+#app.shake{animation:shake .42s}
+.burst{position:fixed;left:50%;top:44%;transform:translate(-50%,-50%);z-index:101;
+  font-weight:900;font-size:clamp(41px,11.7vh,115px);letter-spacing:-.04em;line-height:.9;
+  text-align:center;pointer-events:none;opacity:0;color:var(--amber);
+  text-shadow:3px 3px 0 var(--bg),0 0 40px rgba(255,255,255,.9)}
+@keyframes burstIn{0%{opacity:0;transform:translate(-50%,-50%) scale(2.3) rotate(-8deg)}
+ 14%{opacity:1;transform:translate(-50%,-50%) scale(.95) rotate(-2deg)}
+ 24%{transform:translate(-50%,-50%) scale(1.04) rotate(-2deg)}
+ 78%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(-2deg)}
+ 100%{opacity:0;transform:translate(-50%,-50%) scale(1.12) rotate(-2deg)}}
+.burst.go{animation:burstIn 1.5s cubic-bezier(.2,.9,.3,1)}
+.burst small{display:block;font-size:.24em;letter-spacing:.2em;text-transform:uppercase;color:var(--ink);margin-top:12px;font-weight:700;text-shadow:none}
+
+/* ===== TYPE ===== */
+.kicker{font-family:var(--mono);font-size:clamp(14.5px,2.15vh,17px);letter-spacing:.2em;text-transform:uppercase;color:var(--amber);font-weight:600;margin-bottom:.6vh}
+.kicker.we{color:var(--violet)}.kicker.data{color:var(--teal)}
+.headline{font-size:clamp(24px,6.14vh,58px);line-height:1;letter-spacing:-.04em;font-weight:900;margin:0 0 .5vh}
+.rule{height:4px;background:linear-gradient(90deg,var(--amber),var(--coral) 60%,transparent);
+  margin:1.2vh 0 2vh;transform-origin:left;animation:slashIn .5s cubic-bezier(.2,.9,.2,1);border-radius:3px;flex:0 0 auto}
+@keyframes slashIn{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.speech{font-size:clamp(21px,3.75vh,35px);line-height:1.35;color:var(--ink);max-width:28ch;font-weight:600;margin:0}
+.speech.wide{max-width:40ch}
+.speech b{font-weight:800;color:var(--amber)}
+.speech em{font-style:normal;font-weight:700;color:var(--teal)}
+.speech .quiet{color:var(--muted)}
+.speech p{margin:0 0 .55em}
+.speech p:last-child{margin-bottom:0}
+h3{font-size:clamp(17px,2.4vh,20px);font-weight:700;margin:0 0 6px}
+p{color:var(--ink-2);margin:0 0 8px;font-size:clamp(17px,2.35vh,20px);font-weight:500}
+.small{font-size:clamp(16px,2.15vh,18px)}.dim{color:var(--muted)}.mono{font-family:var(--mono)}
+
+.btn{background:var(--amber);color:#fff;border:0;border-radius:8px;padding:1.1vh 2.2vw;font-size:clamp(17px,2.5vh,21px);font-weight:700;cursor:pointer;white-space:nowrap}
+.btn:hover{filter:brightness(1.1)}
+.btn.ghost{background:var(--panel);border:1px solid var(--line-2);color:var(--ink);font-weight:600}
+.btn.ghost:hover{background:var(--panel-2)}
+.btn.sm{padding:.8vh 14px;font-size:clamp(16px,2.15vh,18px)}
+.btn.epbtn{font-size:clamp(13px,1.76vh,15px);padding:.65vh 12px;min-width:0}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.row{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:1.6vh 16px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+
+.teaminput{display:flex;gap:9px;align-items:center;margin-bottom:6px}
+.teaminput input{flex:1;background:var(--panel);border:1px solid var(--line-2);color:var(--ink);padding:.9vh 12px;border-radius:7px;font-size:clamp(17px,2.35vh,20px);font-family:inherit}
+.teaminput input:focus{outline:2px solid var(--amber)}
+.tnum{font-family:var(--mono);color:var(--muted);width:24px;font-size:12px}
+
+/* DUE BANNER */
+.due{background:var(--coral-bg);border:3px solid var(--coral);border-radius:var(--r);padding:1.6vh 20px;margin:2vh 0 0;flex:0 0 auto}
+.due .lbl{font-family:var(--mono);font-size:clamp(14px,2vh,16px);letter-spacing:.2em;text-transform:uppercase;color:var(--coral);font-weight:700;margin-bottom:.7vh}
+.due ul{margin:0;padding-left:20px}
+.due li{font-size:clamp(20px,3.25vh,30px);font-weight:800;color:var(--ink);margin-bottom:2px;line-height:1.15}
+.due li span{font-weight:700;color:var(--ink-2);font-size:.68em}
+.due .warn{font-size:clamp(17px,2.35vh,22px);margin:.8vh 0 0;color:var(--ink-2);font-weight:600}
+.due.none{background:var(--teal-bg);border-color:var(--teal)}
+.due.none .lbl{color:var(--teal)}
+.due.none .big{font-size:clamp(23px,3.65vh,35px);font-weight:800}
+
+/* TIMER */
+.timerwrap{display:flex;align-items:center;gap:3vw;justify-content:center;flex:1;min-height:0}
+.timer{font-family:var(--mono);font-size:clamp(53px,17.7vh,155px);font-weight:600;font-variant-numeric:tabular-nums;line-height:1;color:var(--ink);letter-spacing:-.03em}
+.timer.warn{color:var(--amber);animation:pulse .55s infinite alternate}
+.timer.out{color:var(--coral);animation:blink 1s step-end infinite}
+@keyframes pulse{from{transform:scale(1)}to{transform:scale(1.04)}}
+
+/* ENTRY */
+.entrywrap{flex:1;min-height:0;display:flex;flex-direction:column}
+.rhead{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex:0 0 auto}
+.rhead-l{min-width:0}
+.teamtabs{display:flex;gap:7px;flex-wrap:wrap;flex:0 1 auto;justify-content:flex-end;
+  max-width:58%;padding-bottom:.4vh}
+.ttab{border:2px solid var(--line-2);background:var(--panel);color:var(--ink-2);font-weight:700;padding:.6vh 12px;border-radius:99px;cursor:pointer;font-size:clamp(13px,1.86vh,16px);display:flex;gap:7px;align-items:center}
+.ttab.active{border-color:var(--amber);color:var(--ink);background:var(--amber-bg)}
+.ttab .dot{width:6px;height:6px;border-radius:99px;background:var(--line-2)}
+.ttab.done .dot{background:var(--teal)}
+.entrygrid{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.epanel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:1.4vh 15px;display:flex;flex-direction:column;min-height:0}
+.escroll{flex:1;min-height:0;overflow-y:auto;margin-top:.6vh}
+.hourbar{display:flex;gap:3px;flex-wrap:wrap;margin:.6vh 0}
+.h{width:19px;height:15px;border-radius:3px;background:#FFFFFF;border:2px solid #6B6252}
+.h.tui{background:#6B6252;border-color:#4A4338}
+.h.task{background:var(--blue);border-color:#0F2E7A}
+.h.state{background:var(--teal);border-color:#064B45}
+.h.bonus{background:var(--coral);border-color:#7F1212}
+.crow{display:flex;align-items:center;gap:10px;padding:.6vh 0;border-bottom:1px solid var(--line)}
+.crow:last-child{border-bottom:0}
+.crow.duenow{background:var(--coral-bg);margin:0 -8px;padding:.6vh 8px;border-radius:5px;border-bottom:0}
+.cname{flex:1;font-size:clamp(16px,2.25vh,19px);min-width:0;font-weight:700;color:var(--ink)}
+.cname.gives,.cname.gives .sub,.sleepopt b.gives,.sleepopt span.gives{color:var(--coral)}
+.cname.gives::before{content:'↑ ';font-weight:800}
+.sleepopt b.gives::before{content:'↑ ';font-weight:800}
+.cname .sub{font-size:clamp(14.5px,1.95vh,16.5px);color:var(--ink-2);font-family:var(--mono);font-weight:600;white-space:nowrap}
+.tag{font-family:var(--mono);font-size:9px;letter-spacing:.06em;padding:1px 5px;border-radius:4px;text-transform:uppercase;font-weight:700}
+.tag.due{background:var(--coral);color:#fff}
+.tag.half{background:var(--blue);color:#fff}
+.tag.miss{background:var(--muted);color:#fff}
+.crow.gone{opacity:.75}
+.crow.gone .cname{text-decoration:line-through;text-decoration-thickness:2px;color:var(--muted)}
+.crow.gone .tag.miss{text-decoration:none;display:inline-block}
+.pick{border:2px solid var(--line-2);background:var(--panel);color:var(--ink);font-weight:700;padding:.5vh 11px;border-radius:6px;cursor:pointer;font-size:clamp(15px,2.15vh,18px)}
+.pick:hover:not(:disabled){border-color:var(--ink-2)}
+.pick.on{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:700}
+.pick:disabled{opacity:.3;cursor:not-allowed}
+.stepper{display:flex;align-items:center;border:1px solid var(--line-2);border-radius:6px;overflow:hidden;background:var(--panel)}
+.stepper button{background:transparent;border:0;color:var(--ink-2);width:27px;height:27px;cursor:pointer;font-size:15px}
+.stepper button:hover:not(:disabled){background:var(--panel-2)}
+.stepper button:disabled{opacity:.25;cursor:not-allowed}
+.stepper .n{font-family:var(--mono);width:22px;text-align:center;font-size:13px}
+.stepper.has .n{color:var(--teal);font-weight:700}
+.locked{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border:1px dashed var(--line-2);padding:3px 8px;border-radius:5px}
+.sleeprow{display:flex;gap:7px;flex-wrap:wrap;margin:.4vh 0 .8vh}
+.sleepopt{flex:1;min-width:130px;border:1px solid var(--line-2);background:var(--panel);border-radius:7px;padding:.7vh 11px;cursor:pointer;text-align:left}
+.sleepopt:hover{border-color:var(--ink-2)}
+.sleepopt.on{border-color:var(--teal);background:var(--teal-bg);border-width:2px}
+.sleepopt.on.bad{border-color:var(--coral);background:var(--coral-bg)}
+.sleepopt b{display:inline;font-size:clamp(15.5px,2.15vh,18px);margin-bottom:1px}
+.sleepopt span{font-family:var(--mono);font-size:clamp(12px,1.64vh,14px);color:var(--ink-2);font-weight:600}
+.ehead{display:flex;justify-content:space-between;align-items:flex-start;flex:0 0 auto}
+.seclbl{font-family:var(--mono);font-size:clamp(14px,1.95vh,15.5px);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:.8vh 0 .3vh;font-weight:700}
+
+/* LEADERBOARD */
+.lb{display:flex;flex-direction:column;gap:1vh;flex:0 0 auto}
+.lbrow{display:flex;align-items:center;gap:16px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:1.5vh 20px;animation:slideIn .45s cubic-bezier(.2,.9,.2,1) backwards}
+@keyframes slideIn{from{opacity:0;transform:translateX(-26px)}to{opacity:1;transform:none}}
+.lbrow.lead{border-color:var(--amber);border-width:3px;background:var(--amber-bg)}
+.rank{font-family:var(--mono);font-size:clamp(16px,2.35vh,20px);color:var(--muted);width:28px}
+.lbrow.lead .rank{color:var(--amber)}
+.lbname{flex:1;font-size:clamp(21px,3.65vh,33px);font-weight:800;letter-spacing:-.02em}
+.lbdelta{font-family:var(--mono);font-size:clamp(15px,2.25vh,19px);color:var(--muted)}
+.lbtotal{font-family:var(--mono);font-size:clamp(27px,5.05vh,47px);font-weight:600;font-variant-numeric:tabular-nums}
+
+/* DATA */
+.dsplit{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:2.5vw;align-items:start}
+.dbody{min-height:0;overflow-y:auto}
+.statbox{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:1.5vh 18px;margin-bottom:1.2vh}
+.bigstat{font-family:var(--mono);font-size:clamp(35px,8.15vh,75px);font-weight:600;line-height:1;letter-spacing:-.04em}
+.bigstat.bad{color:var(--coral)}.bigstat.good{color:var(--teal)}.bigstat.warn{color:var(--amber)}
+.statlbl{font-size:clamp(16px,2.25vh,20px);color:var(--ink);font-weight:700;margin-top:.5vh;line-height:1.3}
+.bar2{display:flex;align-items:center;gap:10px;margin-bottom:.8vh}
+.bar2 .nm{width:100px;font-size:clamp(16px,2.25vh,19px);color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700;color:var(--ink)}
+.bar2 .track{flex:1;height:clamp(21px,3.65vh,33px);background:var(--panel-2);border-radius:5px;overflow:hidden;display:flex;border:1px solid var(--line)}
+.bar2 .fill{height:100%;animation:grow .9s cubic-bezier(.2,.9,.2,1) backwards}
+@keyframes grow{from{width:0 !important}}
+.bar2 .val{font-family:var(--mono);font-size:clamp(15px,2.15vh,18px);font-weight:700;color:var(--ink);width:96px;text-align:right}
+.hatch{background:repeating-linear-gradient(135deg,#F2C4BE,#F2C4BE 5px,#FBE3E1 5px,#FBE3E1 10px)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:.8vh;font-size:clamp(15px,2.1vh,18px);color:var(--ink-2);font-weight:600}
+.legend i{width:11px;height:9px;display:inline-block;vertical-align:middle;margin-right:6px;border-radius:2px}
+table{width:100%;border-collapse:collapse;font-size:clamp(15.5px,2.2vh,19px)}
+th,td{text-align:left;padding:.5vh 8px;border-bottom:1px solid var(--line);font-weight:600}
+th{font-family:var(--mono);font-size:clamp(13.5px,1.85vh,15.5px);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+td.num{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.pos{color:var(--teal);font-weight:700}.neg{color:var(--coral);font-weight:700}.zero{color:var(--amber);font-weight:700}
+.stepdots{display:flex;gap:5px;flex:0 0 auto}
+.stepdots i{width:22px;height:4px;background:var(--line);border-radius:2px}
+.stepdots i.on{background:var(--amber)}
+svg.echart{width:100%;height:auto;max-height:26vh}
+
+/* PRINT */
+#printpack{display:none}
+@page{size:A4 portrait;margin:10mm}
+.psheet{page-break-after:always;color:#000;font-family:'Archivo',sans-serif}
+.psheet:last-child{page-break-after:auto}
+.phead{display:flex;justify-content:space-between;align-items:baseline;
+  border-bottom:2.5px solid #000;padding-bottom:5px;margin-bottom:8px}
+.phead h2{font-size:14pt;font-weight:900;margin:0;letter-spacing:-.02em}
+.phead .pteam{font-family:'IBM Plex Mono',monospace;font-size:10pt;font-weight:700;
+  border:2px solid #000;padding:2px 12px;border-radius:3px}
+.phead .psub{font-family:'IBM Plex Mono',monospace;font-size:8pt;color:#555}
+.pnote{font-size:8pt;color:#333;margin:0 0 7px;line-height:1.35}
+.pnote b{color:#000}
+.sectitle{font-family:'IBM Plex Mono',monospace;font-size:8pt;font-weight:700;
+  letter-spacing:.14em;text-transform:uppercase;border-bottom:1.5px solid #000;
+  padding-bottom:3px;margin:9px 0 5px;display:flex;justify-content:space-between;align-items:baseline}
+.sectitle span{font-weight:400;text-transform:none;letter-spacing:0;color:#444;font-size:7.5pt}
+/* ---- strike-off tables ---- */
+.tsheet{width:100%;border-collapse:collapse;font-size:9pt}
+.tsheet th,.tsheet td{border:1px solid #000;padding:3.5px 6px;text-align:left}
+.tsheet th{background:#EEE;font-family:'IBM Plex Mono',monospace;font-size:7pt;
+  text-transform:uppercase;letter-spacing:.06em;text-align:center}
+.tsheet th.l{text-align:left}
+.tsheet td.c{text-align:center;width:34px}
+.tsheet td.box{text-align:center;width:34px;height:19px}
+.tsheet .nm{font-weight:600;line-height:1.15}
+.tsheet .nm small{display:block;font-family:'IBM Plex Mono',monospace;font-size:6.8pt;
+  font-weight:400;color:#555;margin-top:1px}
+.tsheet td.cost{font-family:'IBM Plex Mono',monospace;font-size:8pt;text-align:right;width:92px}
+.tsheet td.due{font-family:'IBM Plex Mono',monospace;font-size:7.2pt;text-align:center;width:74px;font-weight:700}
+.tsheet tr.wk td{background:#F0F0F0}
+.tsheet td.opt{font-family:'IBM Plex Mono',monospace;font-size:7.5pt;color:#333;width:118px}
+/* hour tracker */
+.htrack{width:100%;border-collapse:collapse;font-size:8pt;margin-top:3px}
+.htrack td{border:1px solid #000;padding:3px 5px;vertical-align:middle}
+.htrack td.rnd{font-family:'IBM Plex Mono',monospace;font-size:7.5pt;font-weight:700;width:118px}
+.hb{display:inline-block;width:15px;height:15px;border:1px solid #333;margin:1px;vertical-align:middle}
+.hb.tui{background:#BBB}
+/* ---- cut-card strips ---- */
+.strip{display:flex;align-items:center;gap:10px;padding:7.5px 3px;
+  border-bottom:1px dashed #888;break-inside:avoid}
+.strip:first-of-type{border-top:1px dashed #888}
+.strip .sname{flex:1;font-size:11pt;font-weight:700;line-height:1.15}
+.strip .sname small{display:block;font-family:'IBM Plex Mono',monospace;
+  font-size:7.5pt;font-weight:400;color:#444;margin-top:1.5px}
+.strip .scost{font-family:'IBM Plex Mono',monospace;font-size:9pt;font-weight:600;
+  text-align:right;white-space:nowrap;min-width:104px}
+.strip .sdue{font-family:'IBM Plex Mono',monospace;font-size:7.5pt;font-weight:700;
+  border:1.5px solid #000;padding:2px 6px;border-radius:3px;white-space:nowrap;min-width:92px;text-align:center}
+.strip.tui{background:#EEE}
+.pcal{width:100%;border-collapse:collapse;font-size:8.5pt;margin-bottom:7px}
+.pcal th,.pcal td{border:1px solid #000;padding:3.5px 6px;text-align:left}
+.pcal th{background:#EEE;font-family:'IBM Plex Mono',monospace;font-size:7pt;text-transform:uppercase}
+.pcal td.we{background:#F0F0F0;font-weight:700}
+.penv{border:2px solid #000;border-radius:4px;padding:11px 13px;margin-bottom:9px;break-inside:avoid}
+.penv .pe-h{font-family:'IBM Plex Mono',monospace;font-size:8pt;font-weight:700;letter-spacing:.1em;margin-bottom:4px}
+.penv .pe-t{font-size:10.5pt;line-height:1.3}
+@media print{
+  html,body{height:auto;overflow:visible;background:#fff}
+  #app,.bar,#fx,.foot{display:none!important}
+  #printpack{display:block!important}
+}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<div id="fx"><div class="speed" id="fxSpeed"></div><div class="flash" id="fxFlash"></div></div>
+<div class="burst" id="fxBurst"></div>
+
+<div id="app">
+<div class="bar"><div class="bar-in">
+  <div class="brand">FOURTEEN<span>·</span>DAYS</div>
+  <div class="crumb" id="crumb">Setup</div>
+  <div class="bar-sp"></div>
+  <button class="tbtn" id="fullBtn">Fullscreen</button>
+  <button class="tbtn" id="fxBtn">FX: on</button>
+  <button class="tbtn" id="printSheetBtn">Print sheets</button>
+  <button class="tbtn" id="printCardBtn">Print cards</button>
+  <button class="tbtn" id="resetBtn">Reset</button>
+</div></div>
+
+<main>
+
+<!-- SETUP -->
+<section class="screen on" id="s-setup">
+  <div class="stage">
+    <h1 class="headline">Fourteen Days</h1>
+    <div class="credit">Created using Claude by SM</div>
+    <div class="rule"></div>
+    <div class="grid2" style="flex:1;min-height:0">
+      <div class="card" style="display:flex;flex-direction:column;min-height:0">
+        <h3>Teams</h3>
+        <p class="small dim" style="margin-bottom:.8vh">Four to six teams of 4–5.</p>
+        <div id="teamFields" style="flex:1;min-height:0;overflow-y:auto"></div>
+        <div class="row" style="margin-top:.8vh">
+          <button class="btn ghost sm" id="addTeam">Add team</button>
+          <button class="btn ghost sm" id="delTeam">Remove team</button></div></div>
+      <div class="card">
+        <h3>Before you begin</h3>
+        <p class="small">Read the briefing once. It covers what the cards mean, how the session works, and the questions you are most likely to get.</p>
+        <p class="small dim">The briefing is the only screen not meant for the projector. Everything after it is.</p>
+        <p class="small dim">Press <b>Fullscreen</b> before you start so nothing gets cut off.</p>
+        <div style="margin-top:1.2vh" class="row">
+          <button class="btn ghost sm" id="jumpBrief">Read the briefing</button>
+          <button class="btn" id="startGame">Begin</button></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- BRIEFING -->
+<section class="screen" id="s-fbrief">
+  <div class="stage scrolly">
+    <div class="kicker">Facilitator briefing · for you, before the session</div>
+    <h1 class="headline" style="font-size:clamp(22px,4.4vh,38px)">What you need to know</h1>
+    <div class="rule"></div>
+    <div class="grid2">
+      <div>
+        <div class="card" style="margin-bottom:12px;border:2px solid var(--amber)">
+          <h3 style="color:var(--amber)">Where this has to land</h3>
+          <p class="small dim" style="margin-bottom:.6vh">If students leave able to say these six things in their own words, the session worked. Everything else is scaffolding.</p>
+          <div class="takes">
+            <div><span class="tn">1</span><span><b>Finishing the work does not finish the stress.</b> The body needs its own signal.</span></div>
+            <div><span class="tn">2</span><span><b>Scrolling is not rest.</b> It costs the same hour and returns almost nothing.</span></div>
+            <div><span class="tn">3</span><span><b>Tired hours are worth less.</b> Five depleted hours can produce less than three clear ones.</span></div>
+            <div><span class="tn">4</span><span><b>The weekend is where the term is won or lost</b> — and it is decided on Tuesday, not Saturday.</span></div>
+            <div><span class="tn">5</span><span><b>One hour of real recovery mid-week buys back several weekend hours.</b></span></div>
+            <div><span class="tn">6</span><span><b>Something will be under-done this year.</b> The only question is whether it is chosen or imposed by exhaustion.</span></div>
+          </div>
+          <p class="small" style="margin:.9vh 0 0;border-top:1px solid var(--line);padding-top:.7vh"><b>Afterwards:</b> use the phrase <em>"the hours you couldn't reach"</em> in an ordinary lesson next week. One unprompted reference from a subject teacher does more for recall than anything inside the 35 minutes.</p>
+        </div>
+        <div class="card" style="margin-bottom:12px">
+          <h3>You do not need to know the DP curriculum</h3>
+          <table>
+            <tr><th>Card</th><th>What it refers to</th></tr>
+            <tr><td><b>Science project — Stage 1 / 2</b></td><td>A long practical write-up in two stages, weeks apart. Stage 2 is longer because it is the finished version.</td></tr>
+            <tr><td><b>Maths problem set</b></td><td>A batch of assigned problems.</td></tr>
+            <tr><td><b>Oral exam prep</b></td><td>Preparation for a spoken assessment.</td></tr>
+            <tr><td><b>Reflective essay outline</b></td><td>A plan for a longer essay.</td></tr>
+            <tr><td><b>University application essay</b></td><td>Personal statement. No school deadline.</td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <h3>How the session works</h3>
+          <p class="small">Task cards score points. <b>Life cards appear to do nothing.</b> They are not nothing — a hidden value decides how many hours each team can access next round, most sharply on weekends. Teams that spend everything on work lose access to their own weekend and cannot finish.</p>
+          <p class="small"><b>Students must not learn this until the reveal.</b> The session depends on them finding it in the scoreboard rather than being told.</p>
+        </div>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:12px">
+          <h3>Three questions you will get</h3>
+          <p class="small"><b>"How does scoring work?"</b> → <span class="mono">"Figure it out."</span> Nothing more.</p>
+          <p class="small"><b>"What are life cards for?"</b> → Shrug. <span class="mono">"They are in the deck."</span></p>
+          <p class="small"><b>"The deadlines are unfair"</b> → <span class="mono">"Noted. Round continues."</span> Do not defend the school — the app handles this in the debrief.</p>
+        </div>
+        <div class="card" style="margin-bottom:12px">
+          <h3>"But my phone relaxes me"</h3>
+          <p class="small">They are half right and the app concedes it. Two phone cards: laughing with someone (+10) and scrolling alone (+2). Do not argue during play, and do not add a screen-time lecture afterwards.</p>
+        </div>
+        <div class="card">
+          <h3>Safeguarding</h3>
+          <p class="small">The session ends on the envelope screen — the one that says some students carry things school never sees. <b>Say that one aloud in your own words.</b> Do not invite anyone to share and do not look at any particular student.</p>
+          <p class="small"><b>There is no exit slip in this version.</b> That means the session has no private route for a student who is struggling but will not say so. Watch the room during the debrief and pass any concerns to the counsellor the same day.</p>
+          <p class="small">If a student tells you something serious directly: listen, do not react, do not promise secrecy, pass it on that day.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><div class="foot-in">
+    <div class="foot-left"><div class="note"></div></div>
+    <div class="foot-right"><button class="btn" id="fbriefBack">Back to setup</button></div>
+  </div></div>
+</section>
+
+<!-- OPENING -->
+<section class="screen" id="s-brief">
+  <div class="stage">
+    <div class="kicker">Before we start</div>
+    <div class="rule"></div>
+    <div class="dsplit" id="briefSplit">
+      <div class="speech" id="briefText" style="align-self:center"></div>
+      <div class="dbody" id="briefBody"></div>
+    </div>
+  </div>
+  <div class="foot"><div class="foot-in">
+    <div class="foot-left"><div class="stepdots" id="briefDots"></div><div class="note" id="briefNote"></div></div>
+    <div class="foot-right">
+      <button class="btn ghost sm" id="briefPrev">Back</button>
+      <button class="btn" id="briefNext">Next</button></div>
+  </div></div>
+</section>
+
+<!-- ROUND -->
+<section class="screen" id="s-round">
+  <div class="stage" id="roundStage">
+    <div class="rhead">
+      <div class="rhead-l">
+        <div class="kicker" id="rKicker">Round 1</div>
+        <h1 class="headline" id="rTitle">Days 1–5</h1>
+      </div>
+      <div class="teamtabs" id="teamTabs"></div>
+    </div>
+    <div class="rule"></div>
+    <div id="roundBrief" style="flex:1;min-height:0;display:flex;flex-direction:column">
+      <div class="speech wide" id="rSpeech"></div>
+      <div id="dueBanner"></div>
+      <div class="timerwrap">
+        <div class="timer" id="timerDisp">1:30</div>
+      </div>
+    </div>
+    <div id="roundEntry" class="entrywrap" style="display:none">
+      <div class="entrygrid" id="entryPanel"></div>
+    </div>
+  </div>
+  <div class="foot"><div class="foot-in" id="roundFoot"></div></div>
+</section>
+
+<!-- STANDINGS -->
+<section class="screen" id="s-stand">
+  <div class="stage">
+    <div class="kicker">Standings</div>
+    <h1 class="headline" id="standTitle">After Round 1</h1>
+    <div class="rule"></div>
+    <div style="flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;gap:2vh">
+      <div class="lb" id="lbList"></div>
+      <div class="speech wide" id="standSpeech"></div>
+    </div>
+  </div>
+  <div class="foot"><div class="foot-in">
+    <div class="foot-left"><div class="note"></div></div>
+    <div class="foot-right">
+      <button class="btn ghost sm" id="backToRound">Back to entry</button>
+      <button class="btn" id="nextRound">Next round</button></div>
+  </div></div>
+</section>
+
+<!-- DATA -->
+<section class="screen" id="s-data">
+  <div class="stage">
+    <div class="kicker data" id="dKicker"></div>
+    <h1 class="headline" id="dTitle" style="font-size:clamp(17px,4.49vh,43px)"></h1>
+    <div class="rule"></div>
+    <div class="dsplit">
+      <div class="dleft">
+        <div class="speech" id="dSpeech"></div>
+        <div class="srcnote" id="dRef"></div>
+      </div>
+      <div class="dbody" id="dBody"></div>
+    </div>
+  </div>
+  <div class="foot"><div class="foot-in">
+    <div class="foot-left"><div class="stepdots" id="dDots"></div><div class="note" id="dNote"></div></div>
+    <div class="foot-right">
+      <button class="btn ghost sm" id="dPrev">Back</button>
+      <button class="btn" id="dNext">Next</button></div>
+  </div></div>
+</section>
+
+<!-- DEBRIEF -->
+<section class="screen" id="s-script">
+  <div class="stage">
+    <div class="kicker" id="sKicker">So what was that</div>
+    <h1 class="headline" id="scriptTitle" style="font-size:clamp(17px,4.49vh,43px)"></h1>
+    <div class="rule"></div>
+    <div class="dsplit" id="scriptSplit">
+      <div class="dleft">
+        <div class="speech" id="scriptSpeech"></div>
+        <div class="srcnote" id="scriptRef"></div>
+      </div>
+      <div class="dbody" id="scriptBody"></div>
+    </div>
+  </div>
+  <div class="foot"><div class="foot-in">
+    <div class="foot-left"><div class="stepdots" id="scriptDots"></div><div class="note" id="scriptNote"></div></div>
+    <div class="foot-right">
+      <button class="btn ghost sm" id="scriptPrev">Back</button>
+      <button class="btn" id="scriptNext">Next</button></div>
+  </div></div>
+</section>
+
+</main>
+</div>
+
+<section id="printpack"><div id="packOut"></div></section>
+
+<script>
+/* ================= DOM HELPERS ================= */
+const NULLEL={style:{},classList:{add(){},remove(){},toggle(){}}};
+function el(id){return document.getElementById(id)||NULLEL;}
+function setTxt(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
+function setHtml(id,v){const e=document.getElementById(id);if(e)e.innerHTML=v;}
+
+/* ================= DATA ================= */
+const TASKS=[
+ {id:'sciA',name:'Science project — Stage 1',stage:'Stage 1 of 2',h:6,pts:15,part:{h:4,pts:8},due:1,day:'Day 5'},
+ {id:'maths',name:'Maths problem set',h:4,pts:10,part:null,due:3,day:'Day 9'},
+ {id:'oral',name:'Oral exam prep',h:4,pts:10,part:{h:2,pts:4},due:3,day:'Day 11'},
+ {id:'essay',name:'Reflective essay outline',h:4,pts:10,part:null,due:3,day:'Day 12'},
+ {id:'sciB',name:'Science project — Stage 2',stage:'Stage 2 of 2 — the finished version, so it is longer',h:7,pts:20,part:null,from:3,due:4,day:'Day 14'},
+ {id:'phys',name:'Physics test revision',h:6,pts:15,part:{h:4,pts:9},due:4,day:'Day 15'},
+ {id:'uni',name:'University application essay',h:5,pts:12,part:null,from:2,due:4,day:'no deadline'},
+ {id:'back',name:'Homework backlog',h:2,pts:4,part:null,creep:true,due:4,day:'no deadline'},
+ {id:'read',name:'Reading catch-up',h:2,pts:3,part:null,due:4,day:'no deadline'}
+];
+const SLEEP=[
+ {id:'protect',name:'Protect your sleep all week',sub:'Costs 2 hours',h:2,e:18,good:true},
+ {id:'normal', name:'Sleep as usual',sub:'No change',h:0,e:0},
+ {id:'cut',    name:'Cut sleep to catch up',sub:'Gives 4 extra hours',h:-4,e:-15,bad:true}
+];
+const STATES=[
+ {id:'move',  name:'Exercise, sport or a long walk',h:1,e:12,rec:true},
+ {id:'people',name:'Time with friends or family, properly',h:1,e:12,rec:true},
+ {id:'laugh', name:'Watch something funny WITH someone',h:1,e:10,rec:true},
+ {id:'create',name:'Music, drawing, playing, building something',h:1,e:12,rec:true},
+ {id:'scroll',name:'Scroll feeds alone',h:1,e:2},
+ {id:'lie',   name:'Lie on the bed doing nothing',h:1,e:3},
+ {id:'nobreak',name:'No breaks at all — work straight through',h:-1,e:-10}
+];
+const EVENTS=[
+ {id:'parent',text:'A parent is unwell and admitted to hospital. Lose 3 hours this round.',h:-3,e:0},
+ {id:'friend',text:'A close friend is struggling and needs you. Lose 2 hours. If you play "Time with friends or family" this round, gain 5 points.',h:-2,e:0,bonus:'people'},
+ {id:'home',  text:'A serious argument at home. Lose 2 hours, and it stays with you.',h:-2,e:-10},
+ {id:'sick',  text:'You fall ill. Lose 4 hours.',h:-4,e:0},
+ {id:'extra', text:'An unexpected extra test is announced at tuition. Lose 3 hours.',h:-3,e:0}
+];
+const BRIEF=[
+ {say:`<p><b>This is a strategy game.</b></p><p>There is a leaderboard. At the end I will show you exactly how the points worked and why.</p>`,note:''},
+ {say:`<p>Your team is running <b>one Grade 12 student</b> through fourteen days.</p><p>Same calendar you have. <em>The deadlines do not clash.</em></p>`,note:'Everyone needs a calendar and a full set of cards before the next screen.'},
+ {say:`<p>Four rounds.</p><p><em>Two are weekdays.</em> About eleven hours each.</p><p><em>Two are weekends.</em> Up to seventeen.</p>`,note:''},
+ {say:`<p>Task cards earn points. <span class="quiet">Life cards do not.</span></p><p>Tuition homework is compulsory. Three hours, every round.</p><p><b>Highest total after fourteen days wins.</b></p>`,note:'Questions about the scoring get one answer: figure it out.'},
+ {say:`<p>Each round you decide together, then tell me what you played.</p><p class="quiet">This is what I will be filling in.</p>`,
+  body:`<div class="statbox" style="margin:0">
+   <div class="legrow"><span class="legkey"><span class="h tui"></span><span class="h tui"></span><span class="h tui"></span></span>
+    <span class="legtxt"><b>Tuition homework.</b> Three hours, gone before you start. You cannot change these.</span></div>
+   <div class="legrow"><span class="legkey"><span class="h task"></span><span class="h task"></span></span>
+    <span class="legtxt"><b>Hours you spend on work.</b></span></div>
+   <div class="legrow"><span class="legkey"><span class="h state"></span></span>
+    <span class="legtxt"><b>Hours you spend on a life card.</b></span></div>
+   <div class="legrow"><span class="legkey"><span class="h"></span><span class="h"></span></span>
+    <span class="legtxt"><b>Hours still unspent.</b> When these run out, the round is over for you.</span></div>
+   <div class="legrow"><span class="legkey"><span class="tag due">due</span></span>
+    <span class="legtxt"><b>Due this round.</b> Hand it in now or lose 5 points.</span></div>
+   <div class="legrow"><span class="legkey"><button class="pick on" style="pointer-events:none">Full</button><button class="pick" style="pointer-events:none">Half</button></span>
+    <span class="legtxt"><b>Full or half.</b> Some work can be half-done for fewer hours and fewer points.</span></div>
+   <div class="legrow"><span class="legkey"><span class="tag" style="background:var(--teal);color:#fff">sleep</span></span>
+    <span class="legtxt"><b>Sleep: pick one option per round.</b> You cannot pick two.</span></div>
+   <div class="legrow"><span class="legkey"><span class="tag" style="background:var(--blue);color:#fff">life</span></span>
+    <span class="legtxt"><b>Life cards: up to two of each per round.</b> Whatever you do not play is lost at the end of the round.</span></div>
+  </div>`,
+  note:'Switch to the entry screen once and show them the layout before Round 1 starts.'}
+];
+const ROUNDS=[
+ {n:1,days:'Days 1–5',sub:'Monday to Friday',we:false,burst:'ROUND 1',bsub:'Monday to Friday',
+  speech:`<p><b>Eleven hours</b> across five days. About two a night.</p><p>Tuition takes three of them before you start.</p>`},
+ {n:2,days:'Days 6–7',sub:'THE WEEKEND',we:true,burst:'WEEKEND',bsub:'Days 6 and 7',
+  speech:`<p>Two free days. <em>Up to seventeen hours.</em></p><p>More than the entire week you just played.</p>`},
+ {n:3,days:'Days 8–12',sub:'Monday to Friday',we:false,burst:'ROUND 3',bsub:'Open your envelopes',
+  speech:`<p>Eleven hours again.</p><p><b>Open your envelope first.</b> Whatever is inside is yours.</p>`},
+ {n:4,days:'Days 13–14',sub:'THE WEEKEND',we:true,burst:'FINAL WEEKEND',bsub:'Last round',
+  speech:`<p>The last weekend.</p><p><b>This is the last round you get.</b></p>`}
+];
+const STAND_SPEECH=[
+ `<p>That is round one. <span class="quiet">Round two starts now.</span></p>`,
+ `<p>Halfway. <span class="quiet">Round three.</span></p>`,
+ `<p>One round left.</p>`,
+ `<p>That is fourteen days. <b>Now I will show you what was actually happening.</b></p>`
+];
+const ACC_WD=[[80,11],[60,10],[40,9],[20,7],[0,6]];
+const ACC_WE=[[80,16],[60,12],[40,8],[20,5],[0,3]];
+const MULT=[[80,1.1],[60,1.0],[40,.85],[20,.7],[0,.55]];
+const TUITION_H=3,TUITION_PTS=6,EPH=3,MISS=5;
+const COLORS=['#C2620A','#0F766E','#6D28D9','#1D4ED8','#C81E1E','#4D7C0F'];
+
+/* ================= FX ================= */
+let fxOn=true;
+function speedlines(){if(!fxOn)return;
+  const el=document.getElementById('fxSpeed');
+  if(!el.children.length){for(let i=0;i<24;i++){const s=document.createElement('span');
+    s.style.transform=`translate(-50%,-50%) rotate(${i*15}deg)`;el.appendChild(s);}}
+  el.classList.remove('go');void el.offsetWidth;el.classList.add('go');}
+function impact(){if(!fxOn)return;
+  const f=document.getElementById('fxFlash'),a=document.getElementById('app');
+  f.classList.remove('go');void f.offsetWidth;f.classList.add('go');
+  a.classList.remove('shake');void a.offsetWidth;a.classList.add('shake');
+  setTimeout(()=>a.classList.remove('shake'),500);}
+function burst(main,sub,color){if(!fxOn)return;
+  const b=document.getElementById('fxBurst');
+  b.innerHTML=main+(sub?`<small>${sub}</small>`:'');
+  b.style.color=color||'var(--amber)';
+  b.classList.remove('go');void b.offsetWidth;b.classList.add('go');speedlines();}
+function countUp(el,to,dur){if(!fxOn){el.textContent=to;return;}
+  const t0=performance.now();
+  function f(t){const p=Math.min(1,(t-t0)/dur);
+    el.textContent=Math.round(to*(1-Math.pow(1-p,3)));if(p<1)requestAnimationFrame(f);}
+  requestAnimationFrame(f);}
+el('fxBtn').onclick=e=>{fxOn=!fxOn;e.target.textContent='FX: '+(fxOn?'on':'off');};
+el('fullBtn').onclick=()=>{
+  if(!document.fullscreenElement)document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();
+  else document.exitFullscreen&&document.exitFullscreen();};
+
+/* ================= STATE ================= */
+let S=null,roundView='brief';
+function fresh(names){
+  const ev=shuffle(EVENTS.map(e=>e.id));
+  return{round:1,phase:'setup',activeTeam:0,briefStep:0,dStep:0,scriptStep:0,
+   teams:names.map((n,i)=>({name:n,color:COLORS[i%COLORS.length],energy:100,hist:[100],
+    total:0,scores:[],gross:[],pens:[],weekend:[],played:{},sleepLog:{},event:ev[i%ev.length],
+    backlogDone:false,done:{},missed:[],entry:{tasks:{},states:{},sleep:'normal'}}))};
+}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+/* Progress is saved in the browser on this device only.
+   Uses localStorage when available (normal hosting or a local file),
+   and falls back to the Claude storage API when running inside Claude. */
+const SKEY='fourteendays:v29';
+const HAS_LS=(()=>{try{const k='__t';localStorage.setItem(k,'1');localStorage.removeItem(k);return true;}catch(e){return false;}})();
+async function save(){
+  const v=JSON.stringify(S);
+  if(HAS_LS){try{localStorage.setItem(SKEY,v);}catch(e){}return;}
+  try{await window.storage.set(SKEY,v);}catch(e){}
+}
+async function load(){
+  if(HAS_LS){try{const v=localStorage.getItem(SKEY);return v?JSON.parse(v):null;}catch(e){return null;}}
+  try{const r=await window.storage.get(SKEY);if(r&&r.value)return JSON.parse(r.value);}catch(e){}
+  return null;
+}
+async function wipe(){
+  if(HAS_LS){try{localStorage.removeItem(SKEY);}catch(e){}return;}
+  try{await window.storage.delete(SKEY);}catch(e){}
+}
+function band(t,e){for(const[lo,v]of t)if(e>=lo)return v;}
+const accessFor=(e,we)=>band(we?ACC_WE:ACC_WD,e);
+const multFor=e=>band(MULT,e);
+function setNote(id,txt){const el=document.getElementById(id);if(!el)return;el.innerHTML=txt||'';}
+
+/* ================= SETUP ================= */
+let names=['Team 1','Team 2','Team 3','Team 4','Team 5'];
+function renderSetup(){
+  const w=document.getElementById('teamFields');w.innerHTML='';
+  names.forEach((n,i)=>{
+    const d=document.createElement('div');d.className='teaminput';
+    d.innerHTML=`<span class="tnum">${String(i+1).padStart(2,'0')}</span>`;
+    const inp=document.createElement('input');inp.value=n;inp.setAttribute('aria-label','Team '+(i+1));
+    inp.oninput=e=>names[i]=e.target.value;d.appendChild(inp);w.appendChild(d);});
+  el('addTeam').disabled=names.length>=6;
+  el('delTeam').disabled=names.length<=2;
+}
+el('addTeam').onclick=()=>{names.push('Team '+(names.length+1));renderSetup();};
+el('delTeam').onclick=()=>{names.pop();renderSetup();};
+el('startGame').onclick=()=>{S=fresh(names.map((n,i)=>n.trim()||('Team '+(i+1))));S.phase='brief';S.briefStep=0;save();render();};
+el('jumpBrief').onclick=()=>{showScreen('s-fbrief');el('crumb').textContent='Briefing';};
+el('fbriefBack').onclick=()=>{showScreen('s-setup');el('crumb').textContent='Setup';};
+
+/* ================= OPENING ================= */
+function renderBrief(){
+  const b=BRIEF[S.briefStep];
+  el('crumb').textContent='Opening '+(S.briefStep+1)+'/'+BRIEF.length;
+  el('briefText').innerHTML=b.say;
+  const bb=document.getElementById('briefBody');
+  bb.innerHTML=b.body||'';
+  el('briefSplit').style.gridTemplateColumns=b.body?'minmax(0,.8fr) minmax(0,1.2fr)':'1fr';
+  bb.style.display=b.body?'block':'none';
+  setNote('briefNote',b.note);
+  el('briefDots').innerHTML=BRIEF.map((_,i)=>`<i class="${i<=S.briefStep?'on':''}"></i>`).join('');
+  el('briefPrev').disabled=S.briefStep===0;
+  el('briefNext').textContent=S.briefStep>=BRIEF.length-1?'Start Round 1':'Next';
+}
+el('briefNext').onclick=()=>{
+  if(S.briefStep>=BRIEF.length-1){S.phase='round';roundView='brief';timerReset();save();render(true);}
+  else{S.briefStep++;save();renderBrief();}};
+el('briefPrev').onclick=()=>{S.briefStep--;save();renderBrief();};
+
+/* ================= ROUND ================= */
+function taskCost(t,r,tm){return(t.creep&&r>=3&&!tm.backlogDone)?4:t.h;}
+const taskAvail=(t,r,tm)=>(!t.from||r>=t.from)&&r<=t.due&&tm.done[t.id]!=='full';
+const eventFor=t=>EVENTS.find(e=>e.id===t.event);
+const sleepOpt=id=>SLEEP.find(s=>s.id===id);
+function baseAccess(tm,r){const R=ROUNDS[r-1];let a=accessFor(tm.energy,R.we);if(r===3)a+=eventFor(tm).h;return Math.max(0,a);}
+function bonusHours(tm){
+  const e=tm.entry;let b=0;
+  const sl=sleepOpt(e.sleep||'normal');if(sl.h<0)b+=-sl.h;
+  for(const id in e.states){const st=STATES.find(x=>x.id===id);if(st.h<0)b+=-st.h*e.states[id];}
+  return b;}
+function usedHours(tm,r){
+  const e=tm.entry;let n=TUITION_H;
+  const sl=sleepOpt(e.sleep||'normal');if(sl.h>0)n+=sl.h;
+  for(const id in e.tasks){const t=TASKS.find(x=>x.id===id);n+=(e.tasks[id]==='part'?t.part.h:taskCost(t,r,tm));}
+  for(const id in e.states){const st=STATES.find(x=>x.id===id);if(st.h>0)n+=st.h*e.states[id];}
+  return n;}
+const dueThisRound=r=>TASKS.filter(t=>t.due===r&&t.day!=='no deadline');
+
+function renderRound(anim){
+  const R=ROUNDS[S.round-1];
+  el('rKicker').textContent='Round '+R.n+' of 4 · '+R.sub;
+  el('rKicker').className='kicker'+(R.we?' we':'');
+  el('rTitle').textContent=R.days;
+  el('rSpeech').innerHTML=R.speech;
+  el('crumb').textContent='Round '+R.n+(roundView==='entry'?' · entry':'');
+  const due=dueThisRound(S.round);
+  document.getElementById('dueBanner').innerHTML = due.length
+    ? `<div class="due"><div class="lbl">Due at the end of this round</div><ul>
+       ${due.map(t=>`<li>${t.name} <span>${t.day} · ${t.h} hours</span></li>`).join('')}</ul>
+       <p class="warn">Miss one and you lose ${MISS} points.</p></div>`
+    : `<div class="due none"><div class="lbl">Due this round</div><div class="big">Nothing.</div></div>`;
+  if(anim)burst(R.burst,R.bsub,R.we?'var(--violet)':'var(--amber)');
+
+  el('roundBrief').style.display=roundView==='brief'?'flex':'none';
+  el('roundEntry').style.display=roundView==='entry'?'flex':'none';
+  el('teamTabs').style.display=roundView==='entry'?'flex':'none';
+
+  const foot=document.getElementById('roundFoot');
+  if(roundView==='brief'){
+    const env=S.round===3?'<div class="note"><b>Round 3:</b> hand each team their sealed envelope before starting the timer.</div>':'<div class="note"></div>';
+    foot.innerHTML=`<div class="foot-left">${env}</div>
+      <div class="foot-right">
+      <button class="btn ghost sm" id="timerReset">Reset</button>
+      <button class="btn ghost sm" id="timerStart">Start 90s</button>
+      <button class="btn" id="toEntry">Enter cards →</button></div>`;
+    el('timerStart').onclick=timerToggle;
+    el('timerReset').onclick=timerReset;
+    el('toEntry').onclick=()=>{roundView='entry';renderRound();if(!tInt&&tLeft===TIMER_SECS)timerStart();};
+    drawTimer();
+  }else{
+    foot.innerHTML=`<div class="foot-left">
+      <span class="minitimer" id="timerDisp2">1:30</span>
+      <div class="note" id="entryStatus"></div></div>
+      <div class="foot-right">
+      <button class="btn ghost sm" id="toBrief">← Back to round</button>
+      <button class="btn" id="scoreRound">Score round</button></div>`;
+    el('toBrief').onclick=()=>{roundView='brief';renderRound();};
+    el('scoreRound').onclick=scoreRound;
+    drawTimer();
+    const tabs=document.getElementById('teamTabs');tabs.innerHTML='';
+    S.teams.forEach((t,i)=>{
+      const b=document.createElement('button');
+      b.className='ttab'+(i===S.activeTeam?' active':'')+(usedHours(t,S.round)>TUITION_H?' done':'');
+      b.innerHTML=`<span class="dot"></span>${t.name}`;
+      b.onclick=()=>{S.activeTeam=i;renderRound();};tabs.appendChild(b);});
+    renderEntry();
+    el('entryStatus').textContent=
+      S.teams.filter(t=>usedHours(t,S.round)>TUITION_H).length+' of '+S.teams.length+' teams entered';
+  }
+}
+function renderEntry(){
+  const tm=S.teams[S.activeTeam],r=S.round,e=tm.entry;
+  if(!e.sleep)e.sleep='normal';
+  const base=baseAccess(tm,r),bonus=bonusHours(tm),avail=base+bonus,used=usedHours(tm,r);
+  let bar='';
+  for(let i=0;i<TUITION_H;i++)bar+='<div class="h tui"></div>';
+  let th=0,sh=0;
+  const sl=sleepOpt(e.sleep);if(sl.h>0)sh+=sl.h;
+  for(const id in e.tasks){const t=TASKS.find(x=>x.id===id);th+=(e.tasks[id]==='part'?t.part.h:taskCost(t,r,tm));}
+  for(const id in e.states){const st=STATES.find(x=>x.id===id);if(st.h>0)sh+=st.h*e.states[id];}
+  for(let i=0;i<th;i++)bar+='<div class="h task"></div>';
+  for(let i=0;i<sh;i++)bar+='<div class="h state"></div>';
+  for(let i=used;i<avail;i++)bar+='<div class="h"></div>';
+  for(let i=0;i<bonus;i++)bar+='<div class="h bonus"></div>';
+  const ev=r===3?eventFor(tm):null;
+  el('entryPanel').innerHTML=`
+   <div class="epanel">
+    <div class="ehead">
+      <div><h3 style="margin:0;font-size:clamp(14px,1.36vh,15px)">${tm.name}</h3>
+      <span class="small dim mono">${used} of ${avail} hours${ev?' · '+ev.h+' from envelope':''}</span></div>
+      <span class="locked">Tuition 3h · 6pt</span></div>
+    <div class="hourbar">${bar}</div>
+    ${ev?`<p class="small" style="margin:0;color:var(--coral)">${ev.text}</p>`:''}
+    <div class="seclbl">Task cards</div>
+    <div class="escroll">
+      ${TASKS.filter(t=>taskAvail(t,r,tm)).sort((a,b)=>(a.due===r?0:1)-(b.due===r?0:1)).map(t=>{
+        const started=tm.done[t.id]==='part';
+        const c=taskCost(t,r,tm),cur=e.tasks[t.id];
+        const restH=t.part?t.h-t.part.h:c, restP=t.part?t.pts-t.part.pts:t.pts;
+        const back=cur==='full'?c:cur==='part'?t.part.h:cur==='finish'?restH:0;
+        const cf=used-back+c<=avail, cp=t.part&&(used-back+t.part.h<=avail), cfin=used-back+restH<=avail;
+        const dn=t.due===r&&t.day!=='no deadline';
+        if(started) return`<div class="crow ${dn?'duenow':''}"><div class="cname">${t.name}
+          <span class="tag half">half done</span> <span class="sub">(finish: ${restH}h · +${restP}pt)</span></div>
+          <button class="pick ${cur==='finish'?'on':''}" data-task="${t.id}" data-mode="finish" ${(!cfin&&cur!=='finish')?'disabled':''}>Finish</button></div>`;
+        return`<div class="crow ${dn?'duenow':''}"><div class="cname">${t.name} ${dn?'<span class="tag due">due</span>':''} <span class="sub">(${c}h · ${t.pts}pt${t.part?' · half '+t.part.h+'h/'+t.part.pts:''})</span></div>
+        <button class="pick ${cur==='full'?'on':''}" data-task="${t.id}" data-mode="full" ${(!cf&&cur!=='full')?'disabled':''}>Full</button>
+        ${t.part?`<button class="pick ${cur==='part'?'on':''}" data-task="${t.id}" data-mode="part" ${(!cp&&cur!=='part')?'disabled':''}>Half</button>`:''}</div>`;}).join('')}
+      ${Object.keys(tm.done).length?`<p class="small dim" style="margin:8px 0 0">Handed in: ${Object.keys(tm.done).map(id=>TASKS.find(t=>t.id===id).name).join(' · ')}</p>`:''}
+      ${tm.missed.map(id=>{const t=TASKS.find(x=>x.id===id);
+        return`<div class="crow gone"><div class="cname">${t.name} <span class="tag miss">deadline passed</span> <span class="sub">(−${MISS}pt)</span></div></div>`;}).join('')}
+    </div></div>
+   <div class="epanel">
+    <div class="seclbl" style="margin-top:0">Sleep — pick one</div>
+    <div class="sleeprow">
+      ${SLEEP.map(s=>`<button class="sleepopt ${e.sleep===s.id?'on':''} ${s.bad?'bad':''}" data-sleep="${s.id}">
+        <b class="${s.bad?'gives':''}">${s.name}</b> <span class="${s.bad?'gives':''}">(${s.sub})</span></button>`).join('')}
+    </div>
+    <div class="seclbl">Life cards — two of each</div>
+    <div class="escroll">
+    ${STATES.map(st=>{const n=e.states[st.id]||0,ca=n<2&&(st.h<0||used+st.h<=avail);
+      return`<div class="crow"><div class="cname${st.h<0?' gives':''}">${st.name} <span class="sub">(${st.h<0?'gives you '+(-st.h)+'h':'costs '+st.h+'h'})</span></div>
+      <div class="stepper ${n>0?'has':''}">
+      <button data-state="${st.id}" data-d="-1" ${n===0?'disabled':''}>−</button>
+      <span class="n">${n}</span>
+      <button data-state="${st.id}" data-d="1" ${!ca?'disabled':''}>+</button></div></div>`;}).join('')}
+    </div>
+    <div class="row" style="margin-top:.8vh">
+      <button class="btn ghost sm epbtn" id="clearTeam">Clear</button>
+      <button class="btn ghost sm epbtn" id="nextTeam">Next team →</button></div>
+   </div>`;
+  document.querySelectorAll('[data-task]').forEach(b=>b.onclick=()=>{
+    const id=b.dataset.task,m=b.dataset.mode;
+    if(e.tasks[id]===m)delete e.tasks[id];else e.tasks[id]=m;save();renderRound();});
+  document.querySelectorAll('[data-sleep]').forEach(b=>b.onclick=()=>{
+    const prev=e.sleep;e.sleep=b.dataset.sleep;
+    if(usedHours(tm,r)>baseAccess(tm,r)+bonusHours(tm))e.sleep=prev;
+    save();renderRound();});
+  document.querySelectorAll('[data-state]').forEach(b=>b.onclick=()=>{
+    const id=b.dataset.state,d=+b.dataset.d;
+    e.states[id]=Math.max(0,Math.min(2,(e.states[id]||0)+d));
+    if(!e.states[id])delete e.states[id];
+    if(usedHours(tm,r)>baseAccess(tm,r)+bonusHours(tm)){e.states[id]=(e.states[id]||0)-d;if(!e.states[id])delete e.states[id];}
+    save();renderRound();});
+  el('clearTeam').onclick=()=>{tm.entry={tasks:{},states:{},sleep:'normal'};save();renderRound();};
+  el('nextTeam').onclick=()=>{S.activeTeam=(S.activeTeam+1)%S.teams.length;renderRound();};
+}
+function scoreRound(){
+  const r=S.round,R=ROUNDS[r-1];
+  S.teams.forEach(t=>{
+    const e=t.entry,base=baseAccess(t,r),bonus=bonusHours(t);
+    let workH=TUITION_H,pts=TUITION_PTS;
+    for(const id in e.tasks){const T=TASKS.find(x=>x.id===id);
+      if(e.tasks[id]==='part'){workH+=T.part.h;pts+=T.part.pts;}
+      else if(e.tasks[id]==='finish'){workH+=T.h-T.part.h;pts+=T.pts-T.part.pts;}
+      else{workH+=taskCost(T,r,t);pts+=T.pts;}
+      if(id==='back')t.backlogDone=true;}
+    let dE=0;
+    const sl=sleepOpt(e.sleep||'normal');dE+=sl.e;t.sleepLog[sl.id]=(t.sleepLog[sl.id]||0)+1;
+    for(const id in e.states){const st=STATES.find(x=>x.id===id);dE+=st.e*e.states[id];t.played[id]=(t.played[id]||0)+e.states[id];}
+    dE-=EPH*workH;
+    let bns=0;
+    if(r===3){const ev=eventFor(t);dE+=ev.e;if(ev.bonus&&(e.states[ev.bonus]||0)>0)bns=5;}
+    for(const id in e.tasks)t.done[id]=(e.tasks[id]==='part')?'part':'full';
+    let pen=0;
+    TASKS.forEach(T=>{if(T.due===r&&!t.done[T.id]&&T.day!=='no deadline'){t.missed.push(T.id);pen+=MISS;}});
+    if(R.we)t.weekend.push({avail:17,reach:base+bonus,used:usedHours(t,r)});
+    t.energy=Math.max(0,Math.min(100,t.energy+dE));
+    t.hist.push(t.energy);
+    const g=Math.round(pts*multFor(t.energy))+bns;
+    const sc=g-pen;
+    t.gross.push(g);t.pens.push(pen);t.scores.push(sc);t.total+=sc;
+    t.entry={tasks:{},states:{},sleep:'normal'};
+  });
+  S.phase='stand';save();render();
+}
+
+/* ================= STANDINGS ================= */
+function renderStand(){
+  el('standTitle').textContent='After Round '+S.round;
+  el('crumb').textContent='Standings R'+S.round;
+  const sorted=S.teams.slice().sort((a,b)=>b.total-a.total);
+  el('lbList').innerHTML=sorted.map((t,i)=>`
+   <div class="lbrow ${i===0?'lead':''}" style="animation-delay:${i*.08}s">
+   <span class="rank">${String(i+1).padStart(2,'0')}</span>
+   <span class="lbname">${t.name}</span>
+   <span class="lbdelta">earned +${t.gross[t.gross.length-1]}${t.pens[t.pens.length-1]?` · <span style="color:var(--coral)">missed −${t.pens[t.pens.length-1]}</span>`:''}</span>
+   <span class="lbtotal" data-to="${t.total}">0</span></div>`).join('');
+  document.querySelectorAll('.lbtotal').forEach((el,i)=>setTimeout(()=>countUp(el,+el.dataset.to,700),180+i*80));
+  el('standSpeech').innerHTML=STAND_SPEECH[S.round-1];
+  el('nextRound').textContent=S.round>=4?'Show the data':'Next round';
+}
+el('nextRound').onclick=()=>{
+  if(S.round>=4){S.phase='data';S.dStep=0;timerStop();}else{S.round++;S.activeTeam=0;S.phase='round';roundView='brief';timerReset();}
+  save();render(true);};
+el('backToRound').onclick=()=>{S.phase='round';roundView='entry';render();};
+
+/* ================= STATS ================= */
+function stats(){
+  const T=S.teams,sum=f=>T.reduce((a,t)=>a+f(t),0);
+  const wkAvail=t=>t.weekend.reduce((a,w)=>a+w.avail,0);
+  const wkUsed=t=>t.weekend.reduce((a,w)=>a+Math.min(w.used,w.reach),0);
+  return{T,sum,wkAvail,wkUsed,
+    scroll:sum(t=>t.played.scroll||0),laugh:sum(t=>t.played.laugh||0),
+    rec:sum(t=>STATES.filter(s=>s.rec).reduce((a,s)=>a+(t.played[s.id]||0),0)),
+    missed:sum(t=>t.missed.length),
+    lost:sum(t=>wkAvail(t)-wkUsed(t)),tot:sum(wkAvail)};
+}
+function bar2(nm,a,b,val,colA){
+  return`<div class="bar2"><span class="nm">${nm}</span><span class="track">
+   <span class="fill" style="width:${a}%;background:${colA}"></span>
+   <span class="fill hatch" style="width:${b}%"></span></span><span class="val">${val}</span></div>`;
+}
+function DATA(){
+  const s=stats(),T=s.T;
+  return[
+  {kick:'What happened · 1 of 4',title:'Your weekend',
+   speech:`<p>You all got the same weekend. <b>Seventeen hours, twice.</b></p><p>This is how much of it you actually used.</p>`,
+   body:()=>`<div class="statbox">
+     ${T.map(t=>{const av=s.wkAvail(t),us=s.wkUsed(t);
+       return bar2(t.name,Math.round(us/av*100),Math.round((av-us)/av*100),us+' of '+av+'h','var(--teal)');}).join('')}
+     <div class="legend"><span><i style="background:var(--teal)"></i>Used</span>
+     <span><i class="hatch" style="display:inline-block;width:11px;height:9px"></i>Had, never touched</span></div></div>
+     <div class="grid2"><div class="statbox"><div class="bigstat bad" data-n="${s.lost}">0</div>
+     <div class="statlbl">weekend hours thrown away</div></div>
+     <div class="statbox"><div class="bigstat" data-n="${s.tot}">0</div>
+     <div class="statlbl">weekend hours you were given</div></div></div>`,
+   note:'Give everyone time to find their own bar before moving on.',fx:'impact'},
+
+  {kick:'What happened · 2 of 4',title:'Not all rest is the same',
+   speech:`<p>Both of these are your phone.</p><p><em>Watching something funny with someone</em> was worth ten. <b>Scrolling alone was worth two.</b></p><p>These numbers are not my opinion.</p>`,
+   body:()=>`<div class="grid2" style="margin-bottom:1vh">
+     <div class="statbox" style="margin:0"><div class="bigstat bad" data-n="${s.scroll}">0</div>
+     <div class="statlbl">hours scrolling alone &mdash; 2 each</div></div>
+     <div class="statbox" style="margin:0"><div class="bigstat good" data-n="${s.laugh}">0</div>
+     <div class="statlbl">hours laughing with someone &mdash; 10 each</div></div></div>
+     <div class="statbox" style="margin:0">
+     <div class="rrow"><span class="rnum">1</span><span class="rtxt"><b>Recovery research looks at four things:</b> switching off, relaxing, doing something you are good at, and having a choice in it. Passive scrolling scores low on all four, so it consistently predicts poor recovery. <span class="quiet">Sonnentag &amp; Fritz, recovery experience research</span></span></div>
+     <div class="rrow"><span class="rnum">2</span><span class="rtxt"><b>Scrolling when you are already drained tends to backfire.</b> Studies on media use find that when people turn to a screen while depleted, they often report guilt afterwards and feel <em>less</em> recovered than before. <span class="quiet">Reinecke et al., media use and recovery</span></span></div>
+     <div class="rrow"><span class="rnum">3</span><span class="rtxt"><b>Your body needs a physical signal, not just a distraction.</b> Laughing, moving and real face-to-face contact activate the parasympathetic system &mdash; heart rate drops, cortisol falls. Looking at a screen does not do this on its own. <span class="quiet">Nagoski &amp; Nagoski, completing the stress cycle</span></span></div>
+     </div>`,
+   ref:`<b>Full citations:</b> Sonnentag &amp; Fritz, <em>Journal of Occupational Health Psychology</em> 12(3), 2007 · Reinecke, Hartmann &amp; Eden, <em>Journal of Communication</em> 64(4), 2014 · Nagoski &amp; Nagoski, <em>Burnout</em>, 2019.`,
+   note:'The numbers came from this, not from an opinion about phones. Full citations are on screen if anyone asks.'},
+
+  {kick:'What happened · 3 of 4',title:'The number you could not see',
+   speech:`<p>A number was running behind all of this. Everyone started at <b>one hundred</b>.</p>
+     <p>It never scored a point. <em>It decided how many hours you got next round.</em></p>
+     <p>You planned around the thing you could see &mdash; <b>time</b>. Nobody planned around the thing you cannot see and only notice once it is gone.</p>`,
+   body:()=>{const W=660,H=210,PL=40,PR=12,PT=12,PB=26;
+     const x=i=>PL+i*(W-PL-PR)/4,y=v=>PT+(100-v)*(H-PT-PB)/100;
+     let g=`<svg class="echart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Energy by round">`;
+     [0,50,100].forEach(v=>{g+=`<line x1="${PL}" y1="${y(v)}" x2="${W-PR}" y2="${y(v)}" stroke="#D2CCBE"/>
+     <text x="${PL-7}" y="${y(v)+4}" fill="#5A5346" font-size="10" font-family="IBM Plex Mono" text-anchor="end">${v}</text>`;});
+     ['Start','Wk 1','Wknd 1','Wk 2','Wknd 2'].forEach((l,i)=>{
+       g+=`<text x="${x(i)}" y="${H-7}" fill="#5A5346" font-size="9" font-family="IBM Plex Mono" text-anchor="middle">${l}</text>`;});
+     T.forEach(t=>{g+=`<polyline points="${t.hist.map((v,i)=>x(i)+','+y(v)).join(' ')}" fill="none" stroke="${t.color}" stroke-width="3" stroke-linejoin="round" stroke-dasharray="1600" stroke-dashoffset="1600"><animate attributeName="stroke-dashoffset" from="1600" to="0" dur="1.6s" fill="freeze"/></polyline>`;
+       t.hist.forEach((v,i)=>g+=`<circle cx="${x(i)}" cy="${y(v)}" r="3.5" fill="${t.color}"/>`);});
+     g+='</svg>';
+     return`<div class="statbox">${g}<div class="legend">${T.map(t=>`<span><i style="background:${t.color}"></i>${t.name} — ${t.energy}</span>`).join('')}</div></div>
+     <div class="statbox"><table>
+     <tr><th>Energy</th><th class="num" style="text-align:right">Weekday hrs</th><th class="num" style="text-align:right">Weekend hrs</th></tr>
+     ${[[80,'80–100'],[60,'60–79'],[40,'40–59'],[20,'20–39'],[0,'Under 20']].map(([v,l])=>
+     `<tr><td class="mono">${l}</td><td class="num">${accessFor(v,false)}</td>
+     <td class="num ${v>=60?'pos':'neg'}">${accessFor(v,true)}</td></tr>`).join('')}</table>
+     <p class="small dim" style="margin:.5vh 0 0">Every hour of work cost 3. Sleep and recovery gave it back.</p>
+     <p class="foot-note">Last year you were taught to <b>eat the frog</b> &mdash; do the hardest thing first. That is a rule for spending time well. It says nothing about how much you have left to spend it with.</p></div>`;},
+   ref:`<b>On "eat the frog":</b> Tracy, <em>Eat That Frog!</em> (2001), and Covey, <em>The 7 Habits of Highly Effective People</em> (1989). Both are rules for the order you spend time in. Neither says anything about how much capacity you have to spend it with.`,
+   note:'Wait for the lines to finish drawing.',fx:'burst'},
+
+  {kick:'What happened · 4 of 4',title:'Nobody finished',
+   speech:`<p><b>Not one team finished everything on the calendar.</b></p><p class="quiet">Not the team that came first either.</p>`,
+   body:()=>`<div class="grid3">
+     <div class="statbox"><div class="bigstat bad" data-n="${s.missed}">0</div><div class="statlbl">deadlines missed</div></div>
+     <div class="statbox"><div class="bigstat warn">0</div><div class="statlbl">teams who finished all</div></div>
+     <div class="statbox"><div class="bigstat good" data-n="${s.rec}">0</div><div class="statlbl">hours spent recovering</div></div></div>
+     <div class="statbox"><table><tr><th>Team</th><th>Missed</th><th class="num" style="text-align:right">Score</th></tr>
+     ${T.slice().sort((a,b)=>b.total-a.total).map(t=>`<tr><td>${t.name}</td>
+     <td class="${t.missed.length?'neg':'pos'}">${t.missed.length?t.missed.map(id=>TASKS.find(x=>x.id===id).name).join(' · '):'nothing'}</td>
+     <td class="num">${t.total}</td></tr>`).join('')}</table></div>`,
+   note:'Worth sitting with for a moment.',fx:'impact'}
+  ];
+}
+function renderData(){
+  const D=DATA(),d=D[S.dStep];
+  el('crumb').textContent='Data '+(S.dStep+1)+'/'+D.length;
+  el('dKicker').textContent=d.kick;
+  el('dTitle').textContent=d.title;
+  el('dSpeech').innerHTML=d.speech;
+  el('dBody').innerHTML=d.body();
+  el('dRef').innerHTML=d.ref||'';
+  setNote('dNote',d.note);
+  el('dDots').innerHTML=D.map((_,i)=>`<i class="${i<=S.dStep?'on':''}"></i>`).join('');
+  el('dPrev').disabled=S.dStep===0;
+  el('dNext').textContent=S.dStep>=D.length-1?'Continue':'Next';
+  document.querySelectorAll('.bigstat[data-n]').forEach((el,i)=>setTimeout(()=>countUp(el,+el.dataset.n,900),250+i*150));
+  if(d.fx==='impact')setTimeout(impact,180);
+  if(d.fx==='burst')setTimeout(()=>burst('ENERGY','the number you never saw','var(--teal)'),150);
+}
+el('dNext').onclick=()=>{
+  const D=DATA();
+  if(S.dStep>=D.length-1){S.phase='script';S.scriptStep=0;save();render();}
+  else{S.dStep++;save();renderData();}};
+el('dPrev').onclick=()=>{S.dStep--;save();renderData();};
+
+/* ================= DEBRIEF ================= */
+const SCRIPT=[
+ {kick:'So what was that',h:'Why your weekend vanished',
+  say:`<p>Handing work in stops the deadline. <b>It does not stop your body.</b></p>
+       <p>Under pressure your heart rate goes up and your body switches into emergency mode. That switch is meant to go on, and then off.</p>
+       <p class="quiet">Yours has been on since the term started.</p>
+       <p>So you reach Saturday. You sleep till one. You open the laptop and close it again. Three hours go to your phone.</p>
+       <p><em>That is not laziness. That is a body that was never told the emergency ended.</em></p>`,
+  body:cycleDiagram,
+  ref:`<b>Source:</b> Nagoski &amp; Nagoski, <em>Burnout: The Secret to Unlocking the Stress Cycle</em> (2019) — the origin of the four-stage cycle and the list of things that complete it.`,
+  note:'Read it slowly. There is no rush.'},
+ {kick:'So what was that',h:'Tired hours are worth less',
+  say:`<p>Memory, focus, decisions — all of them get worse while that switch stays on.</p>
+       <p><b>Five tired hours can produce less than three clear ones.</b></p>
+       <p class="quiet">That is why your score kept coming in lower than your effort deserved.</p>`,
+  ref:`<b>Source:</b> McEwen, <em>Stress, adaptation, and disease: allostasis and allostatic load</em> (1998) — the cumulative cost of a stress system that never switches off.`,note:''},
+ {kick:'So what was that',h:'Your phone half works',
+  say:`<p>Some of you will say your phone relaxes you. <b>You are half right, and the scoreboard agrees.</b></p>
+       <p>Laughing at something with a friend was worth ten. Talking to someone properly was worth twelve. <em>Those genuinely work.</em></p>
+       <p>Scrolling a feed was worth two, whether or not you were texting while you did it.</p>
+       <p>Same phone. Same hour. <b>The difference is whether your body registered anything at all</b> &mdash; laughing out loud, moving, giving one thing your full attention.</p>
+       <p class="quiet">Half-watching a feed while half-replying to someone gives your body neither.</p>`,
+  ref:`<b>Sources:</b> Sonnentag &amp; Fritz, <em>The Recovery Experience Questionnaire</em> (2007) — recovery needs detachment, relaxation, mastery and control. · Reinecke, Hartmann &amp; Eden, <em>The Guilty Couch Potato</em> (2014) — screen use while already depleted often leaves people feeling less recovered, not more.`,note:''},
+ {kick:'So what was that',h:'So what do you actually do',
+  say:`<p>Not "work all weekend". Look at the board — those teams had nothing left by the end.</p>
+       <p>It is <b>arriving at Saturday able to use it.</b></p>
+       <p>And that is decided <em>on Tuesday</em>, not on Saturday morning.</p>
+       <p>One hour midweek spent moving, sleeping properly, or actually being with someone is not an hour stolen from work. <b>It is what buys back the eight weekend hours you would otherwise lose.</b></p>`,
+  ref:`<b>Source:</b> Walker, <em>Why We Sleep</em> (2017) and Diekelmann &amp; Born, <em>The memory function of sleep</em> (2010) — what you study is consolidated into memory while you sleep.`,
+  note:'This is the one thing worth remembering. Leave it up a while.'},
+ {kick:'One last thing',h:'The envelope',
+  say:`<p>Some of what people are carrying never shows up on any school calendar. <span class="quiet">Nobody has to talk about theirs.</span></p>
+       <p>But notice who handled the envelope best.</p>
+       <p>It was not whoever worked hardest. <b>It was whoever had something left.</b></p>`,
+  note:'Worth saying this one out loud. This is the last screen.'}
+];
+
+function cycleDiagram(){
+  const cx=262,cy=205,r=104,w=28,R=r+w/2+13;
+  const rad=d=>(d-90)*Math.PI/180;
+  function arc(a0,a1,col,dash){
+    const x0=cx+r*Math.cos(rad(a0)),y0=cy+r*Math.sin(rad(a0));
+    const x1=cx+r*Math.cos(rad(a1)),y1=cy+r*Math.sin(rad(a1));
+    return `<path d="M${x0} ${y0} A${r} ${r} 0 0 1 ${x1} ${y1}" fill="none" stroke="${col}" stroke-width="${w}" stroke-linecap="butt"${dash?' stroke-dasharray="6 8"':''}/>`;
+  }
+  function num(deg,n,col){
+    const x=cx+r*Math.cos(rad(deg)),y=cy+r*Math.sin(rad(deg));
+    return `<text x="${x}" y="${y+5.5}" fill="${col}" font-size="15" font-weight="900"
+      font-family="Archivo,sans-serif" text-anchor="middle">${n}</text>`;
+  }
+  function lbl(deg,txt,col,right){
+    const x=cx+R*Math.cos(rad(deg)),y=cy+R*Math.sin(rad(deg));
+    return `<text x="${x}" y="${y+5}" fill="${col}" font-size="14.5" font-weight="800"
+      font-family="Archivo,sans-serif" text-anchor="${right?'start':'end'}">${txt}</text>`;
+  }
+  return `<div class="statbox" style="margin:0">
+  <svg viewBox="0 0 524 420" style="width:100%;height:auto;max-height:41vh" role="img"
+    aria-label="The stress cycle with its final stage incomplete">
+    ${arc(8,82,'#8C8375')}
+    ${arc(98,172,'#C2620A')}
+    ${arc(188,262,'#1D4ED8')}
+    ${arc(278,352,'#C81E1E',true)}
+    ${num(45,'1','#FFFFFF')}
+    ${num(135,'2','#FFFFFF')}
+    ${num(225,'3','#FFFFFF')}
+    ${num(315,'4','#C81E1E')}
+    ${lbl(45,'STRESSOR APPEARS','#33302A',true)}
+    ${lbl(135,'BODY SWITCHES ON','#C2620A',true)}
+    ${lbl(225,'TASK IS DONE','#1D4ED8',false)}
+    ${lbl(315,'BODY SWITCHES OFF','#C81E1E',false)}
+    <text x="${cx}" y="${cy-16}" text-anchor="middle" font-family="Archivo,sans-serif"
+      font-size="19" font-weight="900" fill="#14120F">THE STRESS</text>
+    <text x="${cx}" y="${cy+7}" text-anchor="middle" font-family="Archivo,sans-serif"
+      font-size="19" font-weight="900" fill="#14120F">CYCLE</text>
+    <text x="${cx}" y="${cy+34}" text-anchor="middle" font-family="IBM Plex Mono,monospace"
+      font-size="11.5" fill="#C81E1E">stage 4 never happens</text>
+    <text x="262" y="408" text-anchor="middle" font-family="Archivo,sans-serif"
+      font-size="13.5" fill="#33302A">You keep restarting at 1 while still stuck at 3.</text>
+  </svg>
+  <div class="cyclekey">
+    <div><span class="ck" style="background:#8C8375"></span><b>1.</b> Something stresses you &mdash; a deadline, a test, an argument.</div>
+    <div><span class="ck" style="background:#C2620A"></span><b>2.</b> Your body switches on. Heart rate up, muscles ready, repair paused.</div>
+    <div><span class="ck" style="background:#1D4ED8"></span><b>3.</b> You hand it in. <em>The stressor is gone.</em></div>
+    <div><span class="ck" style="background:#C81E1E"></span><b>4.</b> Your body switches off. <b style="color:#C81E1E">This is the part that gets skipped.</b></div>
+  </div></div>`;
+}
+function renderScript(){
+  const st=SCRIPT[S.scriptStep];
+  el('crumb').textContent='Debrief '+(S.scriptStep+1)+'/'+SCRIPT.length;
+  el('sKicker').textContent=st.kick;
+  el('scriptTitle').textContent=st.h;
+  el('scriptSpeech').innerHTML=st.say;
+  const sb=document.getElementById('scriptBody');
+  sb.innerHTML=st.body?st.body():'';
+  el('scriptSplit').style.gridTemplateColumns=st.body?'minmax(0,.9fr) minmax(0,1.1fr)':'1fr';
+  sb.style.display=st.body?'block':'none';
+  el('scriptRef').innerHTML=st.ref||'';
+  setNote('scriptNote',st.note);
+  el('scriptDots').innerHTML=SCRIPT.map((_,i)=>`<i class="${i<=S.scriptStep?'on':''}"></i>`).join('');
+  el('scriptPrev').disabled=S.scriptStep===0;
+  el('scriptNext').disabled=S.scriptStep>=SCRIPT.length-1;
+}
+el('scriptNext').onclick=()=>{S.scriptStep++;save();renderScript();};
+el('scriptPrev').onclick=()=>{S.scriptStep--;save();renderScript();};
+
+/* ================= TIMER ================= */
+const TIMER_SECS=90;
+let tLeft=TIMER_SECS,tInt=null;
+function fmt(n){n=Math.max(0,n);return Math.floor(n/60)+':'+String(n%60).padStart(2,'0');}
+function drawTimer(){
+  const txt=fmt(tLeft);
+  const state=(tLeft<=0?' out':tLeft<=15?' warn':'');
+  const d=document.getElementById('timerDisp');
+  if(d){d.textContent=txt;d.className='timer'+state;}
+  const d2=document.getElementById('timerDisp2');
+  if(d2){d2.textContent=txt;d2.className='minitimer'+state;}
+  const b=document.getElementById('timerStart');
+  if(b)b.textContent=tInt?'Pause':(tLeft<=0?'Restart':(tLeft<TIMER_SECS?'Resume':'Start 90s'));
+}
+function timerStop(){if(tInt){clearInterval(tInt);tInt=null;}}
+function timerStart(){
+  if(tInt)return;
+  if(tLeft<=0)tLeft=TIMER_SECS;
+  tInt=setInterval(()=>{
+    tLeft=Math.max(0,tLeft-1);
+    if(tLeft===0){timerStop();drawTimer();impact();burst('TIME','cards down','var(--coral)');return;}
+    drawTimer();
+  },1000);
+  drawTimer();
+}
+function timerToggle(){if(tInt)timerStop();else timerStart();drawTimer();}
+function timerReset(){timerStop();tLeft=TIMER_SECS;drawTimer();}
+
+/* ================= PRINT ================= */
+const HOURS_R=[11,17,11,17];
+function calTable(){
+  return `<table class="pcal">
+  <tr><th>Round</th><th>Days</th><th>Hours</th><th>Due at the end of this round</th></tr>
+  <tr><td>1</td><td>Days 1–5 · Mon–Fri</td><td>11</td><td>Science project Stage 1 <b>(Day 5)</b></td></tr>
+  <tr><td>2</td><td>Days 6–7 · <b>WEEKEND</b></td><td class="we">up to 17</td><td>nothing</td></tr>
+  <tr><td>3</td><td>Days 8–12 · Mon–Fri</td><td>11</td><td>Maths (D9) · Oral prep (D11) · Essay outline (D12)</td></tr>
+  <tr><td>4</td><td>Days 13–14 · <b>WEEKEND</b></td><td class="we">up to 17</td><td>Science project Stage 2 (D14) · Physics test (D15)</td></tr>
+  </table>`;
+}
+/* ---------- STRIKE-OFF SHEET: one page per team, nothing to cut ---------- */
+function strikeSheet(nm){
+  const tasks=TASKS.map(t=>{
+    const note=[t.from?`only from Round ${t.from}`:'',
+      t.creep?'costs 4 hrs if left until Round 3':''].filter(Boolean).join(' · ');
+    return `<tr><td class="nm">${t.name}${note?`<small>${note}</small>`:''}</td>
+      <td class="cost">${t.h} hrs · ${t.pts}pt</td>
+      <td class="opt">${t.part?`half: ${t.part.h} hrs · ${t.part.pts}pt`:'—'}</td>
+      <td class="due">${t.day==='no deadline'?'ANY TIME':t.day.toUpperCase()}</td>
+      <td class="box"></td></tr>`;}).join('');
+  const sleep=SLEEP.map(x=>`<tr><td class="nm">${x.name}<small>${x.sub}</small></td>
+      <td class="box"></td><td class="box"></td><td class="box"></td><td class="box"></td></tr>`).join('');
+  const life=STATES.map(x=>`<tr><td class="nm">${x.name}</td>
+      <td class="opt">${x.h<0?'gives '+(-x.h)+' hr':'costs '+x.h+' hr'}</td>
+      <td class="box"></td><td class="box"></td><td class="box"></td><td class="box"></td></tr>`).join('');
+  const track=HOURS_R.map((h,i)=>{
+    let b='';
+    for(let k=0;k<h;k++)b+=`<span class="hb${k<3?' tui':''}"></span>`;
+    return `<tr><td class="rnd">ROUND ${i+1}${i%2?' · WEEKEND':''}<br>${h} hours</td><td>${b}</td></tr>`;
+  }).join('');
+  return `<div class="psheet">
+   <div class="phead"><h2>Fourteen Days — team sheet</h2><span class="pteam">${nm.toUpperCase()}</span></div>
+   ${calTable()}
+   <p class="pnote"><b>None of these deadlines clash.</b> Tuition homework is compulsory every round and takes the first 3 hours.
+   <b>Missing a deadline costs ${MISS} points.</b> Hours do not carry over — whatever you do not spend is gone.</p>
+
+   <div class="sectitle">Hours — cross one box per hour you spend <span>grey = tuition, already gone</span></div>
+   <table class="htrack">${track}</table>
+
+   <div class="sectitle">Task cards — tick when handed in <span>write F for full or H for half</span></div>
+   <table class="tsheet">
+     <tr><th class="l">Task</th><th>Full</th><th>Half</th><th>Due</th><th>Done</th></tr>
+     ${tasks}</table>
+
+   <div class="sectitle">Sleep — tick ONE box in each round column</div>
+   <table class="tsheet">
+     <tr><th class="l">Option</th><th>R1</th><th>R2</th><th>R3</th><th>R4</th></tr>
+     ${sleep}</table>
+
+   <div class="sectitle">Life cards — write 0, 1 or 2 in each round column <span>maximum 2 of each, per round</span></div>
+   <table class="tsheet">
+     <tr><th class="l">Card</th><th>Cost</th><th>R1</th><th>R2</th><th>R3</th><th>R4</th></tr>
+     ${life}</table>
+  </div>`;
+}
+/* ---------- CUT CARDS: full-width strips, straight horizontal cuts ---------- */
+function taskStrips(){
+  let h=`<div class="strip tui"><span class="sname">Tuition homework
+      <small>compulsory — played automatically every round</small></span>
+      <span class="scost">3 hrs · 6 pts</span><span class="sdue">EVERY ROUND</span></div>`;
+  TASKS.forEach(t=>{
+    const extra=[t.part?`half-done: ${t.part.h} hrs for ${t.part.pts} pts`:'',
+      t.from?`only from Round ${t.from}`:'',
+      t.creep?'costs 4 hrs if not done by Round 3':''].filter(Boolean).join(' · ');
+    h+=`<div class="strip"><span class="sname">${t.name}${extra?`<small>${extra}</small>`:''}</span>
+      <span class="scost">${t.h} hrs · ${t.pts} pts</span>
+      <span class="sdue">${t.day==='no deadline'?'NO DEADLINE':t.day.toUpperCase()}</span></div>`;});
+  return h;
+}
+function lifeStrips(){
+  let h=`<div class="strip"><span class="sname" style="font-weight:900">SLEEP — pick ONE of the three below, every round</span>
+    <span class="scost"></span><span class="sdue">PICK ONE</span></div>`;
+  SLEEP.forEach(x=>{h+=`<div class="strip"><span class="sname">${x.name}</span>
+      <span class="scost">${x.sub}</span><span class="sdue">SLEEP</span></div>`;});
+  h+=`<div class="strip"><span class="sname" style="font-weight:900">LIFE CARDS — up to TWO of each, every round</span>
+    <span class="scost"></span><span class="sdue">TWO EACH</span></div>`;
+  STATES.forEach(x=>{for(let i=0;i<2;i++){
+      h+=`<div class="strip"><span class="sname">${x.name}</span>
+        <span class="scost">${x.h<0?'gives you '+(-x.h)+' hr':'costs '+x.h+' hr'}</span>
+        <span class="sdue">COPY ${i+1} OF 2</span></div>`;}});
+  return h;
+}
+function envelopePage(){
+  return `<div class="psheet">
+    <div class="phead"><h2>Round 3 — sealed envelopes</h2>
+    <span class="psub">one per team · do not label them</span></div>
+    <p class="pnote">Cut these out and seal one in each envelope. <b>Do not write team names on them.</b>
+    The app decides which team gets which event and shows it on the Round 3 screen — hand them out from there.</p>
+    ${EVENTS.map((e,i)=>`<div class="penv"><div class="pe-h">ENVELOPE ${i+1} · ROUND 3 · DO NOT OPEN EARLY</div>
+      <div class="pe-t">${e.text}</div></div>`).join('')}</div>`;
+}
+function renderPrint(mode){
+  const list=(S&&S.teams)?S.teams.map(t=>t.name):names.slice();
+  let out='';
+  if(mode==='cards'){
+    list.forEach(nm=>{
+      out+=`<div class="psheet"><div class="phead"><h2>Calendar &amp; task cards</h2>
+        <span class="pteam">${nm.toUpperCase()}</span></div>${calTable()}
+        <p class="pnote"><b>None of these deadlines clash.</b> Tuition is compulsory and takes 3 hours every round.
+        <b>Missing a deadline costs ${MISS} points.</b></p>
+        <div class="sectitle">Task cards <span>cut straight across every dashed line</span></div>
+        ${taskStrips()}</div>`;
+      out+=`<div class="psheet"><div class="phead"><h2>Sleep &amp; life cards</h2>
+        <span class="pteam">${nm.toUpperCase()}</span></div>
+        <p class="pnote">Cut straight across every dashed line. Keep each team's set together.</p>
+        ${lifeStrips()}</div>`;});
+  }else{
+    list.forEach(nm=>{out+=strikeSheet(nm);});
+  }
+  out+=envelopePage();
+  el('packOut').innerHTML=out;
+}
+
+/* ================= CHROME ================= */
+el('printSheetBtn').onclick=()=>{renderPrint('sheets');window.print();};
+el('printCardBtn').onclick=()=>{renderPrint('cards');window.print();};
+el('resetBtn').onclick=async()=>{
+  if(!confirm('Clear everything and start again?'))return;
+  S=null;await wipe();
+  el('crumb').textContent='Setup';showScreen('s-setup');};
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id));}
+function render(anim){
+  if(!S){showScreen('s-setup');return;}
+  const p=S.phase;
+  if(p==='brief'){showScreen('s-brief');renderBrief();}
+  else if(p==='round'){showScreen('s-round');renderRound(anim);}
+  else if(p==='stand'){showScreen('s-stand');renderStand();}
+  else if(p==='data'){showScreen('s-data');renderData();}
+  else if(p==='script'){showScreen('s-script');renderScript();}
+  else showScreen('s-setup');
+}
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT')return;
+  if(e.key==='ArrowRight'){const b=document.querySelector('.screen.on .foot .btn:not(.ghost)');if(b&&!b.disabled)b.click();}
+  if(e.key==='ArrowLeft'){const b=document.querySelector('.screen.on .foot .btn.ghost');if(b&&!b.disabled)b.click();}
+});
+(async function init(){
+  renderSetup();renderPrint('sheets');drawTimer();
+  const saved=await load();
+  if(saved&&saved.teams&&saved.phase!=='setup'&&confirm('A session is already in progress. Resume it?'))S=saved;
+  render();
+})();
+</script>
+</body>
+</html>
