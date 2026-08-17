@@ -38,7 +38,11 @@ To update later, upload a new `index.html` over the old one. Everyone gets the n
 
 **No accounts, no database, no network calls.** The page works offline once loaded — useful if school wifi is unreliable.
 
-**One device.** This version is designed for a single mentor laptop connected to a projector. Teams play with paper sheets. Team scores are entered by the mentor.
+**Two ways to run it.**
+
+*Default (no setup):* single mentor laptop and projector, teams play with paper sheets, mentor enters the cards.
+
+*Live mode (optional):* each team submits from their own laptop and the mentor just watches submissions arrive. Needs a free Firebase project — see `SETUP-LIVE.md`. **If live mode fails on the day, manual entry still works and nothing is lost.**
 
 **Clearing a session:** press **Reset** in the top bar. Use this between class sections, or the next class will be offered the previous one's game.
 
@@ -50,6 +54,7 @@ To update later, upload a new `index.html` over the old one. Everyone gets the n
 |---|---|
 | `index.html` | The whole app. Self-contained, no dependencies. |
 | `MENTOR-GUIDE.md` | Objectives, run sheet, what to say, safeguarding, further reading. |
+| `SETUP-LIVE.md` | Optional: let teams submit from their own laptops. |
 | `README.md` | This file. |
 
 ---

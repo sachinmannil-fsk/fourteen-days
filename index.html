@@ -54,6 +54,23 @@ main{flex:1;min-height:0;display:flex;flex-direction:column}
 .minitimer.out{color:var(--coral);animation:blink 1s step-end infinite}
 .credit{font-family:var(--mono);font-size:clamp(16px,2.25vh,19px);letter-spacing:.1em;
   text-transform:uppercase;color:var(--muted);margin-top:.6vh;font-weight:500}
+.livechip{font-family:var(--mono);font-size:clamp(11px,1.5vh,13px);font-weight:700;letter-spacing:.12em;
+  border:2px solid var(--teal);color:var(--teal);background:var(--teal-bg);padding:3px 10px;border-radius:99px;display:none}
+.livechip.on{display:inline-block}
+.livebox{margin-top:1.2vh;border:2px dashed var(--line-2);border-radius:8px;padding:1vh 13px;background:var(--panel-2)}
+.linkbtn{background:none;border:0;padding:0;color:var(--blue);font-weight:700;text-decoration:underline;cursor:pointer;font-size:inherit;font-family:inherit}
+.bigin{width:100%;font-family:var(--mono);font-size:clamp(28px,5vh,44px);font-weight:700;text-transform:uppercase;
+  text-align:center;letter-spacing:.28em;padding:.8vh 10px;border:2px solid var(--line-2);border-radius:8px;background:var(--panel);color:var(--ink)}
+.bigin:focus{outline:3px solid var(--amber)}
+.codebig{font-family:var(--mono);font-size:clamp(40px,9vh,86px);font-weight:700;letter-spacing:.22em;color:var(--teal);line-height:1}
+.subgrid{display:flex;flex-direction:column;gap:.5vh}
+.subrow{display:flex;align-items:center;gap:10px;padding:.6vh 11px;border:2px solid var(--line);border-radius:7px;background:var(--panel)}
+.subrow.in{border-color:var(--teal);background:var(--teal-bg)}
+.subrow .nm{flex:1;font-weight:700}
+.subrow .st{font-family:var(--mono);font-size:clamp(12px,1.6vh,14px);font-weight:700}
+.tpick{border:2px solid var(--line-2);background:var(--panel);color:var(--ink);padding:.7vh 15px;border-radius:7px;
+  cursor:pointer;font-size:clamp(14px,1.9vh,17px);font-weight:700}
+.tpick.on{background:var(--blue);border-color:var(--blue);color:#fff}
 .legrow{display:flex;align-items:center;gap:14px;padding:.75vh 0;border-bottom:1px solid var(--line)}
 .legrow:last-child{border-bottom:0}
 .legkey{flex:0 0 108px;display:flex;gap:4px;align-items:center;justify-content:flex-start}
@@ -333,6 +350,7 @@ svg.echart{width:100%;height:auto;max-height:26vh}
 <div class="bar"><div class="bar-in">
   <div class="brand">FOURTEEN<span>·</span>DAYS</div>
   <div class="crumb" id="crumb">Setup</div>
+  <div class="livechip" id="liveChip"></div>
   <div class="bar-sp"></div>
   <button class="tbtn" id="fullBtn">Fullscreen</button>
   <button class="tbtn" id="fxBtn">FX: on</button>
@@ -364,7 +382,15 @@ svg.echart{width:100%;height:auto;max-height:26vh}
         <p class="small dim">Press <b>Fullscreen</b> before you start so nothing gets cut off.</p>
         <div style="margin-top:1.2vh" class="row">
           <button class="btn ghost sm" id="jumpBrief">Read the briefing</button>
-          <button class="btn" id="startGame">Begin</button></div></div>
+          <button class="btn" id="startGame">Begin</button></div>
+        <div class="livebox" id="liveBox">
+          <div class="row" style="justify-content:space-between">
+            <b class="small">Teams submit from their own laptops</b>
+            <button class="btn ghost sm" id="goLiveBtn">Go live</button></div>
+          <p class="small dim" id="liveStatus" style="margin:.6vh 0 0">Off — you enter the cards yourself.</p>
+        </div>
+        <p class="small dim" style="margin-top:.8vh">Students joining a live room: <button class="linkbtn" id="joinBtn">open the team screen</button></p>
+        </div>
     </div>
   </div>
 </section>
@@ -476,6 +502,33 @@ svg.echart{width:100%;height:auto;max-height:26vh}
   <div class="foot"><div class="foot-in" id="roundFoot"></div></div>
 </section>
 
+<!-- TEAM (students) -->
+<section class="screen" id="s-team">
+  <div class="stage scrolly">
+    <div id="teamJoin">
+      <div class="kicker">Team screen</div>
+      <h1 class="headline" style="font-size:clamp(24px,5.4vh,44px)">Join your room</h1>
+      <div class="rule"></div>
+      <div class="card" style="max-width:440px">
+        <h3>Room code</h3>
+        <input id="joinCode" class="bigin" maxlength="4" placeholder="ABCD" autocomplete="off">
+        <p class="small dim" id="joinMsg" style="margin-top:.8vh">Ask your teacher for the four-letter code.</p>
+        <div id="joinTeams" style="margin-top:1vh"></div>
+      </div>
+    </div>
+    <div id="teamPlay" style="display:none">
+      <div class="kicker" id="tKicker">Round 1</div>
+      <h1 class="headline" style="font-size:clamp(22px,4.6vh,38px)" id="tTitle">Your team</h1>
+      <div class="rule"></div>
+      <div id="tBody"></div>
+    </div>
+  </div>
+  <div class="foot"><div class="foot-in">
+    <div class="foot-left"><div class="note" id="tNote"></div></div>
+    <div class="foot-right"><button class="btn" id="tSubmit" style="display:none">Submit round</button></div>
+  </div></div>
+</section>
+
 <!-- STANDINGS -->
 <section class="screen" id="s-stand">
   <div class="stage">
@@ -544,7 +597,21 @@ svg.echart{width:100%;height:auto;max-height:26vh}
 
 <section id="printpack"><div id="packOut"></div></section>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <script>
+/* ============================================================
+   LIVE MODE CONFIG  —  paste your Firebase settings between the
+   braces below. Leave it exactly as it is to run offline only.
+   Instructions are in SETUP-LIVE.md
+   ============================================================ */
+const FIREBASE_CONFIG = {
+  // apiKey: "...",
+  // authDomain: "...",
+  // databaseURL: "...",
+  // projectId: "..."
+};
+
 /* ================= DOM HELPERS ================= */
 const NULLEL={style:{},classList:{add(){},remove(){},toggle(){}}};
 function el(id){return document.getElementById(id)||NULLEL;}
@@ -695,6 +762,204 @@ const accessFor=(e,we)=>band(we?ACC_WE:ACC_WD,e);
 const multFor=e=>band(MULT,e);
 function setNote(id,txt){const el=document.getElementById(id);if(!el)return;el.innerHTML=txt||'';}
 
+
+/* ============================================================
+   LIVE MODE — teams submit from their own laptops.
+   The mentor screen stays in charge: it publishes what each team
+   can do, receives submissions, and can override any of them.
+   If this is not configured, or the network fails, everything
+   falls back to manual entry and nothing breaks.
+   ============================================================ */
+const LIVE={on:false,code:null,db:null,role:null,teamIx:null,subs:{},ready:false};
+
+function liveConfigured(){return !!(FIREBASE_CONFIG&&FIREBASE_CONFIG.databaseURL);}
+function liveInit(){
+  if(LIVE.ready)return true;
+  if(!liveConfigured()||typeof firebase==='undefined')return false;
+  try{
+    if(!firebase.apps.length)firebase.initializeApp(FIREBASE_CONFIG);
+    LIVE.db=firebase.database();LIVE.ready=true;return true;
+  }catch(e){console.warn('live init failed',e);return false;}
+}
+function makeCode(){const A='ABCDEFGHJKLMNPQRSTUVWXYZ';let c='';for(let i=0;i<4;i++)c+=A[Math.floor(Math.random()*A.length)];return c;}
+function liveRef(path){return LIVE.db.ref('rooms/'+LIVE.code+(path?'/'+path:''));}
+
+/* ---- what each team is allowed to do this round ---- */
+function viewFor(tm,r){
+  const R=ROUNDS[r-1];
+  return{
+    name:tm.name,
+    avail:baseAccess(tm,r),
+    ext:!!tm.ext,
+    weekend:!!R.we,
+    days:R.days,
+    tasks:TASKS.filter(t=>taskAvail(t,r,tm)).map(t=>({
+      id:t.id,h:taskCost(t,r,tm),started:tm.done[t.id]==='part',
+      due:dueFor(t,tm)===r&&t.day!=='no deadline'})),
+    missed:tm.missed.slice(),
+    event:(r===3?eventFor(tm).text:'')
+  };
+}
+function livePublish(){
+  if(!LIVE.on)return;
+  const r=S.round,payload={round:r,open:true,at:Date.now(),teams:{}};
+  S.teams.forEach((tm,i)=>payload.teams[i]=viewFor(tm,r));
+  liveRef().update(payload).catch(e=>console.warn('publish failed',e));
+}
+function liveClose(){if(LIVE.on)liveRef('open').set(false).catch(()=>{});}
+
+/* ---- mentor listens for submissions ---- */
+function liveListenSubs(){
+  if(!LIVE.on)return;
+  liveRef('subs').on('value',snap=>{
+    LIVE.subs=snap.val()||{};
+    const r=S.round,got=LIVE.subs[r]||{};
+    Object.keys(got).forEach(ix=>{
+      const tm=S.teams[+ix];if(!tm)return;
+      const sub=got[ix];
+      tm.entry={tasks:sub.tasks||{},states:sub.states||{},sleep:sub.sleep||'normal'};
+      tm.submitted=true;
+    });
+    if(S.phase==='round')renderRound();
+  });
+}
+function liveSubCount(){const g=(LIVE.subs[S.round]||{});return Object.keys(g).length;}
+
+/* ---- mentor: start a room ---- */
+function goLive(){
+  if(!liveInit()){
+    el('liveStatus').innerHTML='<b style="color:var(--coral)">Live mode is not set up.</b> See SETUP-LIVE.md. You can still run the session by entering cards yourself.';
+    return;
+  }
+  LIVE.code=makeCode();LIVE.on=true;LIVE.role='mentor';
+  const names=(S&&S.teams)?S.teams.map(t=>t.name):names_current();
+  const payload={created:Date.now(),round:0,open:false,teams:{}};
+  names.forEach((n,i)=>payload.teams[i]={name:n});
+  liveRef().set(payload)
+    .then(()=>{
+      el('liveStatus').innerHTML='Live. Students open the same link, choose <b>the team screen</b>, and enter this code.';
+      el('liveChip').textContent='ROOM '+LIVE.code;
+      el('liveChip').classList.add('on');
+      el('goLiveBtn').textContent='Live: '+LIVE.code;
+      el('goLiveBtn').disabled=true;
+      liveListenSubs();
+    })
+    .catch(e=>{LIVE.on=false;el('liveStatus').innerHTML='<b style="color:var(--coral)">Could not connect.</b> Carry on with manual entry.';console.warn(e);});
+}
+function names_current(){return names.map((n,i)=>n.trim()||('Team '+(i+1)));}
+
+/* ---- team side ---- */
+function teamJoin(code){
+  if(!liveInit()){el('joinMsg').innerHTML='<b style="color:var(--coral)">This link is not set up for live rooms.</b>';return;}
+  LIVE.code=code.toUpperCase();LIVE.role='team';
+  LIVE.db.ref('rooms/'+LIVE.code+'/teams').get().then(snap=>{
+    const t=snap.val();
+    if(!t){el('joinMsg').innerHTML='<b style="color:var(--coral)">No room with that code.</b> Check with your teacher.';return;}
+    el('joinMsg').textContent='Which team are you?';
+    el('joinTeams').innerHTML=Object.keys(t).map(ix=>
+      `<button class="tpick" data-join="${ix}" style="margin:4px 4px 0 0">${t[ix].name}</button>`).join('');
+    document.querySelectorAll('[data-join]').forEach(b=>b.onclick=()=>{
+      LIVE.teamIx=+b.dataset.join;LIVE.on=true;
+      el('teamJoin').style.display='none';el('teamPlay').style.display='block';
+      el('liveChip').textContent='ROOM '+LIVE.code;el('liveChip').classList.add('on');
+      teamWatch();
+    });
+  }).catch(e=>{el('joinMsg').innerHTML='<b style="color:var(--coral)">Could not connect.</b>';console.warn(e);});
+}
+let TEAMENTRY={tasks:{},states:{},sleep:'normal'},TEAMVIEW=null,TEAMROUND=0;
+function teamWatch(){
+  LIVE.db.ref('rooms/'+LIVE.code).on('value',snap=>{
+    const room=snap.val();if(!room)return;
+    const v=(room.teams||{})[LIVE.teamIx];
+    if(room.round!==TEAMROUND){TEAMROUND=room.round;TEAMENTRY={tasks:{},states:{},sleep:'normal'};}
+    TEAMVIEW=v;renderTeam(room);
+  });
+}
+function teamUsed(){
+  let n=0;const sl=sleepOpt(TEAMENTRY.sleep||'normal');if(sl.h>0)n+=sl.h;
+  for(const id in TEAMENTRY.tasks){const t=TASKS.find(x=>x.id===id);const tv=(TEAMVIEW.tasks||[]).find(x=>x.id===id);
+    n+=(TEAMENTRY.tasks[id]==='part'?t.part.h:TEAMENTRY.tasks[id]==='finish'?(t.h-t.part.h):(tv?tv.h:t.h));}
+  for(const id in TEAMENTRY.states){const st=STATES.find(x=>x.id===id);if(st.h>0)n+=st.h*TEAMENTRY.states[id];}
+  return n;
+}
+function teamBonus(){
+  let b=0;const sl=sleepOpt(TEAMENTRY.sleep||'normal');if(sl.h<0)b+=-sl.h;
+  for(const id in TEAMENTRY.states){const st=STATES.find(x=>x.id===id);if(st.h<0)b+=-st.h*TEAMENTRY.states[id];}
+  return b;
+}
+function renderTeam(room){
+  const v=TEAMVIEW;if(!v){el('tBody').innerHTML='<p>Waiting for your teacher…</p>';return;}
+  el('tTitle').textContent=v.name;
+  el('tKicker').textContent=room.round?('Round '+room.round+(v.weekend?' · WEEKEND':'')+' · '+v.days):'Waiting to start';
+  if(!room.open){
+    el('tBody').innerHTML='<div class="card"><h3>Waiting for the next round</h3><p>Your teacher will open it shortly.</p></div>';
+    el('tSubmit').style.display='none';setTxt('tNote','');return;
+  }
+  const already=(room.subs&&room.subs[room.round]&&room.subs[room.round][LIVE.teamIx]);
+  if(already){
+    el('tBody').innerHTML='<div class="card"><h3 style="color:var(--teal)">Submitted ✓</h3><p>Wait for the standings.</p></div>';
+    el('tSubmit').style.display='none';setTxt('tNote','');return;
+  }
+  const avail=v.avail+teamBonus(),used=teamUsed(),left=avail-used;
+  let bar='';for(let i=0;i<TUITION_H;i++)bar+='<div class="h tui"></div>';
+  for(let i=0;i<used-((sleepOpt(TEAMENTRY.sleep||'normal').h>0)?0:0)-TUITION_H+TUITION_H;i++){}
+  const spent=used-TUITION_H;
+  for(let i=0;i<spent;i++)bar+='<div class="h task"></div>';
+  for(let i=used;i<avail;i++)bar+='<div class="h"></div>';
+  el('tBody').innerHTML=`
+   <div class="card">
+     <div class="row" style="justify-content:space-between"><b>${used} of ${avail} hours used</b>
+     <span class="locked">Homework 3h · 6pt</span></div>
+     <div class="hourbar">${bar}</div>
+     ${v.event?`<p class="small" style="color:var(--coral);margin:.5vh 0 0"><b>${v.event}</b></p>`:''}
+     ${v.ext?`<p class="small" style="color:var(--teal);margin:.4vh 0 0"><b>Extension granted — Round 3 deadlines run to the final weekend.</b></p>`:''}
+   </div>
+   <div class="card"><div class="seclbl" style="margin-top:0">Task cards</div>
+   ${(v.tasks||[]).map(tv=>{const t=TASKS.find(x=>x.id===tv.id);const cur=TEAMENTRY.tasks[t.id];
+     const restH=t.part?t.h-t.part.h:tv.h,restP=t.part?t.pts-t.part.pts:t.pts;
+     if(tv.started)return`<div class="crow"><div class="cname">${t.name} <span class="tag half">half done</span>
+       <span class="sub">(finish: ${restH}h · +${restP}pt)</span></div>
+       <button class="tpick ${cur==='finish'?'on':''}" data-tt="${t.id}" data-tm="finish">Finish</button></div>`;
+     return`<div class="crow ${tv.due?'duenow':''}"><div class="cname">${t.name} ${tv.due?'<span class="tag due">due</span>':''}
+       <span class="sub">(${tv.h}h · ${t.pts}pt${t.part?' · half '+t.part.h+'h/'+t.part.pts:''})</span></div>
+       <button class="tpick ${cur==='full'?'on':''}" data-tt="${t.id}" data-tm="full">Full</button>
+       ${t.part?`<button class="tpick ${cur==='part'?'on':''}" data-tt="${t.id}" data-tm="part">Half</button>`:''}</div>`;}).join('')}
+   ${(v.missed||[]).map(id=>{const t=TASKS.find(x=>x.id===id);
+     return`<div class="crow gone"><div class="cname">${t.name} <span class="tag miss">deadline passed</span></div></div>`;}).join('')}
+   </div>
+   <div class="card"><div class="seclbl" style="margin-top:0">Sleep — pick one</div>
+   <div class="sleeprow">${SLEEP.map(x=>`<button class="sleepopt ${TEAMENTRY.sleep===x.id?'on':''} ${x.bad?'bad':''}" data-ts="${x.id}">
+     <b class="${x.bad?'gives':''}">${x.name}</b> <span class="${x.bad?'gives':''}">(${x.sub})</span></button>`).join('')}</div>
+   <div class="seclbl">Life cards — up to two of each</div>
+   ${STATES.map(x=>{const n=TEAMENTRY.states[x.id]||0;
+     return`<div class="crow"><div class="cname${x.h<0?' gives':''}">${x.name}
+       <span class="sub">(${x.h<0?'gives you '+(-x.h)+'h':'costs '+x.h+'h'})</span></div>
+       <div class="stepper ${n>0?'has':''}"><button data-tl="${x.id}" data-td="-1" ${n===0?'disabled':''}>−</button>
+       <span class="n">${n}</span><button data-tl="${x.id}" data-td="1" ${n>=2?'disabled':''}>+</button></div></div>`;}).join('')}
+   </div>`;
+  document.querySelectorAll('[data-tt]').forEach(b=>b.onclick=()=>{
+    const id=b.dataset.tt,m=b.dataset.tm;
+    if(TEAMENTRY.tasks[id]===m)delete TEAMENTRY.tasks[id];else TEAMENTRY.tasks[id]=m;
+    if(teamUsed()>v.avail+teamBonus())delete TEAMENTRY.tasks[id];
+    renderTeam(room);});
+  document.querySelectorAll('[data-ts]').forEach(b=>b.onclick=()=>{
+    const prev=TEAMENTRY.sleep;TEAMENTRY.sleep=b.dataset.ts;
+    if(teamUsed()>v.avail+teamBonus())TEAMENTRY.sleep=prev;renderTeam(room);});
+  document.querySelectorAll('[data-tl]').forEach(b=>b.onclick=()=>{
+    const id=b.dataset.tl,dd=+b.dataset.td;
+    TEAMENTRY.states[id]=Math.max(0,Math.min(2,(TEAMENTRY.states[id]||0)+dd));
+    if(!TEAMENTRY.states[id])delete TEAMENTRY.states[id];
+    if(teamUsed()>v.avail+teamBonus()){TEAMENTRY.states[id]=(TEAMENTRY.states[id]||0)-dd;if(!TEAMENTRY.states[id])delete TEAMENTRY.states[id];}
+    renderTeam(room);});
+  el('tSubmit').style.display='inline-block';
+  setTxt('tNote',left>0?(left+' hours still unspent'):'All hours spent');
+}
+function teamSubmit(){
+  LIVE.db.ref('rooms/'+LIVE.code+'/subs/'+TEAMROUND+'/'+LIVE.teamIx)
+    .set({tasks:TEAMENTRY.tasks,states:TEAMENTRY.states,sleep:TEAMENTRY.sleep,at:Date.now()})
+    .catch(e=>alert('Could not submit — tell your teacher.'));
+}
+
 /* ================= SETUP ================= */
 let names=['Team 1','Team 2','Team 3','Team 4','Team 5'];
 function renderSetup(){
@@ -707,6 +972,10 @@ function renderSetup(){
   el('addTeam').disabled=names.length>=6;
   el('delTeam').disabled=names.length<=2;
 }
+el('goLiveBtn').onclick=goLive;
+el('joinBtn').onclick=()=>{showScreen('s-team');el('crumb').textContent='Team';};
+el('joinCode').oninput=e=>{const v=e.target.value.toUpperCase().replace(/[^A-Z]/g,'');e.target.value=v;if(v.length===4)teamJoin(v);};
+el('tSubmit').onclick=()=>{teamSubmit();el('tSubmit').style.display='none';setTxt('tNote','Submitted — waiting for the others.');};
 el('addTeam').onclick=()=>{names.push('Team '+(names.length+1));renderSetup();};
 el('delTeam').onclick=()=>{names.pop();renderSetup();};
 el('startGame').onclick=()=>{S=fresh(names.map((n,i)=>n.trim()||('Team '+(i+1))));S.phase='brief';S.briefStep=0;save();render();};
@@ -781,7 +1050,7 @@ function renderRound(anim){
       <button class="btn" id="toEntry">Enter cards →</button></div>`;
     el('timerStart').onclick=timerToggle;
     el('timerReset').onclick=timerReset;
-    el('toEntry').onclick=()=>{roundView='entry';renderRound();if(!tInt&&tLeft===TIMER_SECS)timerStart();};
+    el('toEntry').onclick=()=>{roundView='entry';livePublish();renderRound();if(!tInt&&tLeft===TIMER_SECS)timerStart();};
     drawTimer();
   }else{
     foot.innerHTML=`<div class="foot-left">
@@ -800,8 +1069,16 @@ function renderRound(anim){
       b.innerHTML=`<span class="dot"></span>${t.name}`;
       b.onclick=()=>{S.activeTeam=i;renderRound();};tabs.appendChild(b);});
     renderEntry();
-    el('entryStatus').textContent=
-      S.teams.filter(t=>usedHours(t,S.round)>TUITION_H).length+' of '+S.teams.length+' teams entered';
+    if(LIVE.on&&LIVE.role==='mentor'){
+      el('entryStatus').innerHTML='<span class="subgrid">'+S.teams.map((t,i)=>{
+        const inn=t.submitted;
+        return `<span class="subrow ${inn?'in':''}"><span class="nm">${t.name}</span>
+          <span class="st" style="color:${inn?'var(--teal)':'var(--muted)'}">${inn?'submitted ✓':'waiting…'}</span></span>`;
+      }).join('')+'</span>';
+    } else {
+      el('entryStatus').textContent=
+        S.teams.filter(t=>usedHours(t,S.round)>TUITION_H).length+' of '+S.teams.length+' teams entered';
+    }
   }
 }
 function renderEntry(){
@@ -917,6 +1194,8 @@ function scoreRound(){
     t.gross.push(g);t.pens.push(pen);t.scores.push(sc);t.total+=sc;
     t.entry={tasks:{},states:{},sleep:'normal'};
   });
+  liveClose();
+  S.teams.forEach(t=>t.submitted=false);
   S.phase='stand';save();render();
 }
 
@@ -1303,6 +1582,8 @@ el('resetBtn').onclick=async()=>{
   S=null;await wipe();
   el('crumb').textContent='Setup';showScreen('s-setup');};
 function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id));}
+/* deep link: index.html?team opens the student screen directly */
+if(location.search.indexOf('team')>-1){window.addEventListener('load',()=>{showScreen('s-team');el('crumb').textContent='Team';});}
 function render(anim){
   if(!S){showScreen('s-setup');return;}
   const p=S.phase;
