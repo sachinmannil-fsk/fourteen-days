@@ -164,15 +164,7 @@ Firebase's free tier allows **100 simultaneous connections**, where a connection
 
 **So "one laptop per team" is a capacity requirement, not just a tidiness one.** Nominate one student per team to be the scribe, and say so when you send the link.
 
-### Adding a second server for headroom
-
-If you want margin, create a **second Firebase project** exactly as above and paste its settings into `FIREBASE_B` in `index.html`. Then split your classes — say four on server A, three on server B.
-
-Each project has its own 100-connection allowance, so this doubles your capacity for free.
-
-On the day, the mentor picks **A** or **B** next to the Go live button before starting. The team link updates automatically to include the right server, so students don't have to know which one they're on.
-
-**Tell each mentor which server they're on in advance.** Getting it wrong isn't harmful — their teams just can't find the room — but it wastes a minute at the start.
+**If connections do climb near the limit**, the fix is to create a second Firebase project and run some classes from a second copy of the app. You are very unlikely to need this — but check **Realtime Database → Usage** in the Firebase console five minutes into your first live session. If it reads around 42, you are fine and can stop thinking about it.
 
 ## Between sessions
 
