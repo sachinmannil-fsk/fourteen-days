@@ -224,9 +224,12 @@ p{color:var(--ink-2);margin:0 0 8px;font-size:clamp(17px,2.35vh,20px);font-weigh
 .lbrow.lead{border-color:var(--amber);border-width:3px;background:var(--amber-bg)}
 .rank{font-family:var(--mono);font-size:clamp(16px,2.35vh,20px);color:var(--muted);width:28px}
 .lbrow.lead .rank{color:var(--amber)}
-.lbmid{display:flex;flex-direction:column;align-items:flex-end;gap:2px;min-width:0}
-.lbchoice{font-family:var(--mono);font-size:clamp(13px,1.85vh,16px);color:var(--ink-2);font-weight:600;white-space:nowrap}
-.lbname{flex:1;font-size:clamp(21px,3.65vh,33px);font-weight:800;letter-spacing:-.02em}
+.lbmain{flex:1;display:flex;flex-direction:column;gap:.4vh;min-width:0}
+.lbchoice{font-family:var(--mono);font-size:clamp(15px,2.15vh,19px);color:var(--ink);font-weight:600;
+  background:var(--panel-2);border:1.5px solid var(--line-2);border-radius:6px;
+  padding:.35vh 10px;align-self:flex-start;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lbrow.lead .lbchoice{background:#FFF7E3;border-color:var(--amber)}
+.lbname{font-size:clamp(21px,3.65vh,33px);font-weight:800;letter-spacing:-.02em}
 .lbdelta{font-family:var(--mono);font-size:clamp(15px,2.25vh,19px);color:var(--muted)}
 .lbtotal{font-family:var(--mono);font-size:clamp(27px,5.05vh,47px);font-weight:600;font-variant-numeric:tabular-nums}
 
@@ -925,9 +928,9 @@ function renderStand(){
   el('lbList').innerHTML=sorted.map((t,i)=>`
    <div class="lbrow ${i===0?'lead':''}" style="animation-delay:${i*.08}s">
    <span class="rank">${String(i+1).padStart(2,'0')}</span>
-   <span class="lbname">${t.name}</span>
-   <span class="lbmid"><span class="lbchoice">${t.logs[t.logs.length-1]||''}</span>
-   <span class="lbdelta">earned +${t.gross[t.gross.length-1]}${t.pens[t.pens.length-1]?` · <span style="color:var(--coral)">missed −${t.pens[t.pens.length-1]}</span>`:''}</span></span>
+   <span class="lbmain"><span class="lbname">${t.name}</span>
+   <span class="lbchoice">${t.logs[t.logs.length-1]||'nothing played'}</span></span>
+   <span class="lbdelta">earned +${t.gross[t.gross.length-1]}${t.pens[t.pens.length-1]?`<br><span style="color:var(--coral)">missed −${t.pens[t.pens.length-1]}</span>`:''}</span>
    <span class="lbtotal" data-to="${t.total}">0</span></div>`).join('');
   document.querySelectorAll('.lbtotal').forEach((el,i)=>setTimeout(()=>countUp(el,+el.dataset.to,700),180+i*80));
   el('standSpeech').innerHTML=STAND_SPEECH[S.round-1];
