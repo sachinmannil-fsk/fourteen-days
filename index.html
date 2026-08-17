@@ -58,6 +58,14 @@ main{flex:1;min-height:0;display:flex;flex-direction:column}
   border:2px solid var(--teal);color:var(--teal);background:var(--teal-bg);padding:3px 10px;border-radius:99px;display:none}
 .livechip.on{display:inline-block}
 .livebox{margin-top:1.2vh;border:2px dashed var(--line-2);border-radius:8px;padding:1vh 13px;background:var(--panel-2)}
+.codeline{display:flex;align-items:center;gap:10px;margin:.9vh 0 .7vh}
+.codelbl{font-family:var(--mono);font-size:clamp(11px,1.5vh,13px);letter-spacing:.18em;color:var(--muted);font-weight:700}
+.codeval{font-family:var(--mono);font-size:clamp(26px,4.4vh,40px);font-weight:700;letter-spacing:.2em;color:var(--teal);line-height:1}
+.selsm{font-family:var(--mono);font-size:clamp(13px,1.8vh,16px);font-weight:700;padding:.5vh 8px;
+  border:2px solid var(--line-2);border-radius:7px;background:var(--panel);color:var(--ink)}
+.linkrow{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.linkin{flex:1;min-width:200px;font-family:var(--mono);font-size:clamp(12px,1.7vh,15px);
+  padding:.6vh 10px;border:2px solid var(--line-2);border-radius:7px;background:var(--panel);color:var(--ink)}
 .linkbtn{background:none;border:0;padding:0;color:var(--blue);font-weight:700;text-decoration:underline;cursor:pointer;font-size:inherit;font-family:inherit}
 .bigin{width:100%;font-family:var(--mono);font-size:clamp(28px,5vh,44px);font-weight:700;text-transform:uppercase;
   text-align:center;letter-spacing:.28em;padding:.8vh 10px;border:2px solid var(--line-2);border-radius:8px;background:var(--panel);color:var(--ink)}
@@ -386,8 +394,18 @@ svg.echart{width:100%;height:auto;max-height:26vh}
         <div class="livebox" id="liveBox">
           <div class="row" style="justify-content:space-between">
             <b class="small">Teams submit from their own laptops</b>
-            <button class="btn ghost sm" id="goLiveBtn">Go live</button></div>
+            <span class="row" style="gap:6px">
+              <span class="small dim">Server</span>
+              <select id="serverSel" class="selsm"><option value="A">A</option><option value="B">B</option></select>
+              <button class="btn ghost sm" id="goLiveBtn">Go live</button></span></div>
           <p class="small dim" id="liveStatus" style="margin:.6vh 0 0">Off — you enter the cards yourself.</p>
+          <div id="liveShare" style="display:none">
+            <div class="codeline"><span class="codelbl">CODE</span><span class="codeval" id="liveCode">----</span></div>
+            <div class="linkrow"><input id="liveLink" class="linkin" readonly>
+              <button class="btn ghost sm" id="copyLink">Copy link</button>
+              <button class="btn sm" id="copyMsg">Copy message</button></div>
+            <p class="small dim" id="copyMsgOut" style="margin:.5vh 0 0"></p>
+          </div>
         </div>
         <p class="small dim" style="margin-top:.8vh">Students joining a live room: <button class="linkbtn" id="joinBtn">open the team screen</button></p>
         </div>
@@ -605,7 +623,8 @@ svg.echart{width:100%;height:auto;max-height:26vh}
    braces below. Leave it exactly as it is to run offline only.
    Instructions are in SETUP-LIVE.md
    ============================================================ */
-const FIREBASE_CONFIG = {
+/* Server A — already set up. */
+const FIREBASE_A = {
   apiKey: "AIzaSyActQTwloaaz-ChJ5MXdic2W-AyJ0lXO7A",
   authDomain: "fourteen-days-fa508.firebaseapp.com",
   databaseURL: "https://fourteen-days-fa508-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -614,6 +633,18 @@ const FIREBASE_CONFIG = {
   messagingSenderId: "600070839422",
   appId: "1:600070839422:web:52283b800a40351d814c2f"
 };
+
+/* Server B — optional second Firebase project.
+   Each project allows 100 simultaneous connections (one per browser tab).
+   If several classes run at the same time, split them across A and B.
+   Paste a second project's settings here; leave empty to use A only. */
+const FIREBASE_B = {
+};
+
+const SERVERS = {A:FIREBASE_A, B:FIREBASE_B};
+let SERVER_KEY = (new URLSearchParams(location.search).get('s')||'A').toUpperCase();
+if(!SERVERS[SERVER_KEY]) SERVER_KEY='A';
+const FIREBASE_CONFIG = SERVERS[SERVER_KEY];
 
 /* ================= DOM HELPERS ================= */
 const NULLEL={style:{},classList:{add(){},remove(){},toggle(){}}};
@@ -744,7 +775,7 @@ function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor
 /* Progress is saved in the browser on this device only.
    Uses localStorage when available (normal hosting or a local file),
    and falls back to the Claude storage API when running inside Claude. */
-const SKEY='fourteendays:v30';
+const SKEY='fourteendays:v32';
 const HAS_LS=(()=>{try{const k='__t';localStorage.setItem(k,'1');localStorage.removeItem(k);return true;}catch(e){return false;}})();
 async function save(){
   const v=JSON.stringify(S);
@@ -775,13 +806,16 @@ function setNote(id,txt){const el=document.getElementById(id);if(!el)return;el.i
    ============================================================ */
 const LIVE={on:false,code:null,db:null,role:null,teamIx:null,subs:{},ready:false};
 
-function liveConfigured(){return !!(FIREBASE_CONFIG&&FIREBASE_CONFIG.databaseURL);}
+function liveConfigured(){const c=SERVERS[SERVER_KEY];return !!(c&&c.databaseURL);}
 function liveInit(){
   if(LIVE.ready)return true;
   if(!liveConfigured()||typeof firebase==='undefined')return false;
   try{
-    if(!firebase.apps.length)firebase.initializeApp(FIREBASE_CONFIG);
-    LIVE.db=firebase.database();LIVE.ready=true;return true;
+    const cfg=SERVERS[SERVER_KEY];
+    if(!cfg||!cfg.databaseURL)return false;
+    const name='fd_'+SERVER_KEY;
+    const app=firebase.apps.find(a=>a.name===name)||firebase.initializeApp(cfg,name);
+    LIVE.db=firebase.database(app);LIVE.ready=true;return true;
   }catch(e){console.warn('live init failed',e);return false;}
 }
 function makeCode(){const A='ABCDEFGHJKLMNPQRSTUVWXYZ';let c='';for(let i=0;i<4;i++)c+=A[Math.floor(Math.random()*A.length)];return c;}
@@ -840,7 +874,10 @@ function goLive(){
   names.forEach((n,i)=>payload.teams[i]={name:n});
   liveRef().set(payload)
     .then(()=>{
-      el('liveStatus').innerHTML='Live. Students open the same link, choose <b>the team screen</b>, and enter this code.';
+      el('liveStatus').innerHTML='Live. Send students the link below, or write it on the board with the code.';
+      el('liveShare').style.display='block';
+      el('liveCode').textContent=LIVE.code;
+      el('liveLink').value=teamURL();
       el('liveChip').textContent='ROOM '+LIVE.code;
       el('liveChip').classList.add('on');
       el('goLiveBtn').textContent='Live: '+LIVE.code;
@@ -848,6 +885,23 @@ function goLive(){
       liveListenSubs();
     })
     .catch(e=>{LIVE.on=false;el('liveStatus').innerHTML='<b style="color:var(--coral)">Could not connect.</b> Carry on with manual entry.';console.warn(e);});
+}
+function teamURL(){return location.origin+location.pathname+'?team'+(SERVER_KEY!=='A'?('&s='+SERVER_KEY):'');}
+function joinMessage(){
+  return 'Fourteen Days \u2014 open this on your laptop:\n'+teamURL()+
+    '\n\nRoom code: '+LIVE.code+'\n\nOne person per team joins, then pick your team name.';
+}
+function copyText(txt,okMsg){
+  const done=()=>{setTxt('copyMsgOut',okMsg);setTimeout(()=>setTxt('copyMsgOut',''),2500);};
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(done).catch(()=>fallback());
+  } else fallback();
+  function fallback(){
+    const t=document.createElement('textarea');t.value=txt;t.style.position='fixed';t.style.opacity='0';
+    document.body.appendChild(t);t.select();
+    try{document.execCommand('copy');done();}catch(e){setTxt('copyMsgOut','Could not copy — select the link and copy it manually.');}
+    document.body.removeChild(t);
+  }
 }
 function names_current(){return names.map((n,i)=>n.trim()||('Team '+(i+1)));}
 
@@ -867,7 +921,9 @@ function teamJoin(code){
       el('liveChip').textContent='ROOM '+LIVE.code;el('liveChip').classList.add('on');
       teamWatch();
     });
-  }).catch(e=>{el('joinMsg').innerHTML='<b style="color:var(--coral)">Could not connect.</b>';console.warn(e);});
+  }).catch(e=>{
+    el('joinMsg').innerHTML='<b style="color:var(--coral)">Could not connect.</b> The room may be full, or the network is blocking it. <b>Tell your teacher — they can enter your cards instead.</b>';
+    console.warn(e);});
 }
 let TEAMENTRY={tasks:{},states:{},sleep:'normal'},TEAMVIEW=null,TEAMROUND=0;
 function teamWatch(){
@@ -975,7 +1031,13 @@ function renderSetup(){
   el('addTeam').disabled=names.length>=6;
   el('delTeam').disabled=names.length<=2;
 }
+el('serverSel').value=SERVER_KEY;
+el('serverSel').onchange=e=>{SERVER_KEY=e.target.value;LIVE.ready=false;
+  setTxt('liveStatus',SERVERS[SERVER_KEY]&&SERVERS[SERVER_KEY].databaseURL?('Server '+SERVER_KEY+' selected.'):('Server '+SERVER_KEY+' is not set up yet — see SETUP-LIVE.md.'));};
 el('goLiveBtn').onclick=goLive;
+el('copyLink').onclick=()=>copyText(teamURL(),'Link copied.');
+el('copyMsg').onclick=()=>copyText(joinMessage(),'Message copied — paste it into chat.');
+el('liveLink').onclick=e=>e.target.select();
 el('joinBtn').onclick=()=>{showScreen('s-team');el('crumb').textContent='Team';};
 el('joinCode').oninput=e=>{const v=e.target.value.toUpperCase().replace(/[^A-Z]/g,'');e.target.value=v;if(v.length===4)teamJoin(v);};
 el('tSubmit').onclick=()=>{teamSubmit();el('tSubmit').style.display='none';setTxt('tNote','Submitted — waiting for the others.');};

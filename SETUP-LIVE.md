@@ -22,10 +22,10 @@ Firebase is a free Google service that lets the laptops talk to each other. The 
 
 ## Part 2 — Create the database
 
-1. In the left sidebar, click **Build** → **Realtime Database**.
-   *(Realtime Database, not Firestore. They are different products and the app needs this one.)*
+1. Navigate to **Databases & Storage** → **Realtime Database**.
+   *(Depending on your console version this may sit under **Build** instead. Either way: **Realtime Database**, not Cloud Firestore. They are different products and the app needs this one.)*
 2. Click **Create Database**.
-3. Choose a location near you. Next.
+3. Choose a location near you. **You cannot change this later.** Next.
 4. Select **Start in test mode**. Enable.
 
 You now have an empty database.
@@ -34,7 +34,7 @@ You now have an empty database.
 
 ## Part 3 — Set the access rules
 
-Test mode expires after 30 days, so set proper rules now.
+**Do this straight away.** If test-mode rules are left untouched, Firebase emails a warning and then starts denying all requests — which would break the app mid-term.
 
 1. In Realtime Database, click the **Rules** tab.
 2. Delete what's there and paste this exactly:
@@ -75,6 +75,8 @@ projectId: "fourteen-days-xxxx",
 
 **Check that `databaseURL` is in the list.** If it isn't, you created Firestore instead of Realtime Database — go back to Part 2.
 
+Your URL will end in either `.firebaseio.com` (us-central1) or `.firebasedatabase.app` (all other regions). Both are fine.
+
 ---
 
 ## Part 5 — Paste it into the app
@@ -112,6 +114,8 @@ const FIREBASE_CONFIG = {
 
 Test with two browser windows on your own laptop first.
 
+**Test on school wifi as well as at home.** Some school networks block outside services, and you want to find that out now rather than mid-lesson.
+
 **Window 1 (mentor):**
 1. Open your site
 2. Enter team names
@@ -147,6 +151,28 @@ If it does, you're ready.
 Tell mentors this in advance so nobody panics.
 
 ---
+
+## Running several classes at the same time
+
+Firebase's free tier allows **100 simultaneous connections**, where a connection is one browser tab.
+
+| Setup | Tabs | |
+|---|---|---|
+| One class | 6 | fine |
+| 7 classes, **one laptop per team** | 42 | fine |
+| 7 classes, every student joins | 175 | **over the limit — joins get rejected** |
+
+**So "one laptop per team" is a capacity requirement, not just a tidiness one.** Nominate one student per team to be the scribe, and say so when you send the link.
+
+### Adding a second server for headroom
+
+If you want margin, create a **second Firebase project** exactly as above and paste its settings into `FIREBASE_B` in `index.html`. Then split your classes — say four on server A, three on server B.
+
+Each project has its own 100-connection allowance, so this doubles your capacity for free.
+
+On the day, the mentor picks **A** or **B** next to the Go live button before starting. The team link updates automatically to include the right server, so students don't have to know which one they're on.
+
+**Tell each mentor which server they're on in advance.** Getting it wrong isn't harmful — their teams just can't find the room — but it wastes a minute at the start.
 
 ## Between sessions
 
