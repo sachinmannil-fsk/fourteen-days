@@ -360,8 +360,6 @@ svg.echart{width:100%;height:auto;max-height:26vh}
   <div class="bar-sp"></div>
   <button class="tbtn" id="fullBtn">Fullscreen</button>
   <button class="tbtn" id="fxBtn">FX: on</button>
-  <button class="tbtn" id="printSheetBtn">Print sheets</button>
-  <button class="tbtn" id="printCardBtn">Print cards</button>
   <button class="tbtn" id="resetBtn">Reset</button>
 </div></div>
 
@@ -782,7 +780,7 @@ function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor
 /* Progress is saved in the browser on this device only.
    Uses localStorage when available (normal hosting or a local file),
    and falls back to the Claude storage API when running inside Claude. */
-const SKEY='fourteendays:v36';
+const SKEY='fourteendays:v38';
 const HAS_LS=(()=>{try{const k='__t';localStorage.setItem(k,'1');localStorage.removeItem(k);return true;}catch(e){return false;}})();
 async function save(){
   const v=JSON.stringify(S);
@@ -840,6 +838,37 @@ function viewFor(tm,r){
     missed:tm.missed.slice(),
     event:(r===3?eventFor(tm).text:'')
   };
+}
+function mirrorPayload(){
+  const st=stats();
+  const sorted=S.teams.slice().sort((a,b)=>b.total-a.total);
+  return{
+    phase:S.phase,
+    round:S.round,
+    dStep:S.dStep,
+    roundInfo:(S.phase==='round')?{
+      kicker:'Round '+S.round+' of 4 · '+ROUNDS[S.round-1].sub,
+      title:ROUNDS[S.round-1].days,
+      speech:ROUNDS[S.round-1].speech,
+      due:dueThisRound(S.round).map(t=>({name:t.name,day:t.day,h:t.h}))
+    }:null,
+    standings:(S.phase==='stand')?sorted.map(t=>({
+      name:t.name,total:t.total,
+      gross:t.gross[t.gross.length-1]||0,
+      pen:t.pens[t.pens.length-1]||0,
+      log:t.logs[t.logs.length-1]||''
+    })):null,
+    data:(S.phase==='data')?{
+      teams:S.teams.map(t=>({name:t.name,color:t.color,total:t.total,energy:t.energy,
+        hist:t.hist,wkAvail:st.wkAvail(t),wkUsed:st.wkUsed(t),
+        missed:t.missed.map(id=>TASKS.find(x=>x.id===id).name)})),
+      totals:{lost:st.lost,tot:st.tot,scroll:st.scroll,laugh:st.laugh,rec:st.rec,missed:st.missed}
+    }:null
+  };
+}
+function liveMirror(){
+  if(!LIVE.on||LIVE.role!=='mentor')return;
+  liveRef('mirror').set(mirrorPayload()).catch(()=>{});
 }
 function livePublish(){
   if(!LIVE.on)return;
@@ -930,12 +959,20 @@ function teamJoin(code){
     console.warn(e);});
 }
 let TEAMENTRY={tasks:{},states:{},sleep:'normal'},TEAMVIEW=null,TEAMROUND=0;
+let TEAMROOM=null,TEAMTICK=null;
 function teamWatch(){
+  if(!TEAMTICK)TEAMTICK=setInterval(()=>{
+    if(!TEAMROOM||!TEAMROOM.timer||!TEAMROOM.timer.running)return;
+    const tt=teamTimerText(TEAMROOM);if(!tt)return;
+    const a=document.querySelector('#s-team .timer'),b=document.querySelector('#s-team .minitimer');
+    if(a){a.textContent=tt.txt;a.className='timer '+tt.cls;}
+    if(b){b.textContent=tt.txt;b.className='minitimer '+tt.cls;}
+  },1000);
   LIVE.db.ref('rooms/'+LIVE.code).on('value',snap=>{
     const room=snap.val();if(!room)return;
     const v=(room.teams||{})[LIVE.teamIx];
     if(room.round!==TEAMROUND){TEAMROUND=room.round;TEAMENTRY={tasks:{},states:{},sleep:'normal'};}
-    TEAMVIEW=v;renderTeam(room);
+    TEAMROOM=room;TEAMVIEW=v;renderTeam(room);
   });
 }
 function teamUsed(){
@@ -950,11 +987,101 @@ function teamBonus(){
   for(const id in TEAMENTRY.states){const st=STATES.find(x=>x.id===id);if(st.h<0)b+=-st.h*TEAMENTRY.states[id];}
   return b;
 }
+function teamTimerText(room){
+  const t=room.timer;if(!t)return null;
+  const left=t.running?Math.max(0,Math.round((t.endsAt-Date.now())/1000)):(t.left||0);
+  return{left,txt:Math.floor(left/60)+':'+String(left%60).padStart(2,'0'),
+    cls:left<=0?'out':left<=15?'warn':''};
+}
+function teamBars(d){
+  return d.teams.map(t=>{
+    const pc=Math.round(t.wkUsed/t.wkAvail*100);
+    return bar2(t.name,pc,100-pc,t.wkUsed+' of '+t.wkAvail+'h','var(--teal)');
+  }).join('');
+}
+function teamEnergyChart(d){
+  const W=660,H=210,PL=40,PR=12,PT=12,PB=26;
+  const x=i=>PL+i*(W-PL-PR)/4,y=v=>PT+(100-v)*(H-PT-PB)/100;
+  let g=`<svg class="echart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Energy by round">`;
+  [0,50,100].forEach(v=>{g+=`<line x1="${PL}" y1="${y(v)}" x2="${W-PR}" y2="${y(v)}" stroke="#C2BAA6"/>
+   <text x="${PL-7}" y="${y(v)+4}" fill="#3D3830" font-size="10" font-family="IBM Plex Mono" text-anchor="end">${v}</text>`;});
+  ['Start','Wk 1','Wknd 1','Wk 2','Wknd 2'].forEach((l,i)=>{
+    g+=`<text x="${x(i)}" y="${H-7}" fill="#3D3830" font-size="9" font-family="IBM Plex Mono" text-anchor="middle">${l}</text>`;});
+  d.teams.forEach(t=>{
+    g+=`<polyline points="${(t.hist||[]).map((v,i)=>x(i)+','+y(v)).join(' ')}" fill="none" stroke="${t.color}" stroke-width="3" stroke-linejoin="round"/>`;
+    (t.hist||[]).forEach((v,i)=>g+=`<circle cx="${x(i)}" cy="${y(v)}" r="3.5" fill="${t.color}"/>`);});
+  return g+'</svg>';
+}
+function renderTeamMirror(room){
+  const m=room.mirror;if(!m)return false;
+  const K=el('tKicker'),T=el('tTitle'),B=el('tBody');
+  if(m.phase==='stand'&&m.standings){
+    K.textContent='Standings';T.textContent='After Round '+m.round;
+    B.innerHTML='<div class="lb">'+m.standings.map((t,i)=>`
+      <div class="lbrow ${i===0?'lead':''}"><span class="rank">${String(i+1).padStart(2,'0')}</span>
+      <span class="lbmain"><span class="lbname">${t.name}</span>
+      <span class="lbchoice">${t.log||'nothing played'}</span></span>
+      <span class="lbdelta">earned +${t.gross}${t.pen?'<br><span style="color:var(--coral)">missed −'+t.pen+'</span>':''}</span>
+      <span class="lbtotal">${t.total}</span></div>`).join('')+'</div>';
+    el('tSubmit').style.display='none';setTxt('tNote','');return true;
+  }
+  if(m.phase==='data'&&m.data){
+    const d=m.data,c=d.totals,step=m.dStep||0;
+    K.textContent='What happened · '+(step+1)+' of 4';
+    const views=[
+      {t:'Your weekend',b:`<div class="statbox">${teamBars(d)}
+        <div class="legend"><span><i style="background:var(--teal)"></i>Used</span>
+        <span><i class="hatch" style="display:inline-block;width:11px;height:9px"></i>Had, never touched</span></div></div>
+        <div class="grid2"><div class="statbox"><div class="bigstat bad">${c.lost}</div>
+        <div class="statlbl">weekend hours thrown away</div></div>
+        <div class="statbox"><div class="bigstat">${c.tot}</div>
+        <div class="statlbl">weekend hours you were given</div></div></div>`},
+      {t:'Not all rest is the same',b:`<div class="grid2">
+        <div class="statbox"><div class="bigstat bad">${c.scroll}</div><div class="statlbl">hours scrolling alone — 2 each</div></div>
+        <div class="statbox"><div class="bigstat good">${c.laugh}</div><div class="statlbl">hours laughing with someone — 10 each</div></div></div>
+        <div class="statbox"><table><tr><th>Card</th><th class="num" style="text-align:right">Energy</th></tr>
+        ${SLEEP.filter(x=>x.id!=='normal').concat(STATES).sort((a,b)=>b.e-a.e).map(st=>
+          `<tr><td>${st.name}</td><td class="num ${st.e>8?'pos':st.e<0?'neg':'zero'}">${st.e>0?'+':''}${st.e}</td></tr>`).join('')}
+        </table></div>`},
+      {t:'The number you could not see',b:`<div class="statbox">${teamEnergyChart(d)}
+        <div class="legend">${d.teams.map(t=>`<span><i style="background:${t.color}"></i>${t.name} — ${t.energy}</span>`).join('')}</div></div>`},
+      {t:'Nobody finished',b:`<div class="grid3">
+        <div class="statbox"><div class="bigstat bad">${c.missed}</div><div class="statlbl">deadlines missed</div></div>
+        <div class="statbox"><div class="bigstat warn">0</div><div class="statlbl">teams who finished all</div></div>
+        <div class="statbox"><div class="bigstat good">${c.rec}</div><div class="statlbl">hours spent recovering</div></div></div>
+        <div class="statbox"><table><tr><th>Team</th><th>Missed</th><th class="num" style="text-align:right">Score</th></tr>
+        ${d.teams.slice().sort((a,b)=>b.total-a.total).map(t=>`<tr><td>${t.name}</td>
+        <td class="${t.missed.length?'neg':'pos'}">${t.missed.length?t.missed.join(' · '):'nothing'}</td>
+        <td class="num">${t.total}</td></tr>`).join('')}</table></div>`}
+    ];
+    const v=views[Math.min(step,3)];
+    T.textContent=v.t;B.innerHTML=v.b;
+    el('tSubmit').style.display='none';setTxt('tNote','');return true;
+  }
+  if(m.phase==='script'){
+    K.textContent='';T.textContent='Look up';
+    B.innerHTML='<div class="card"><h3>Screens off for a few minutes</h3><p>Your teacher is taking it from here.</p></div>';
+    el('tSubmit').style.display='none';setTxt('tNote','');return true;
+  }
+  return false;
+}
 function renderTeam(room){
+  const m=room.mirror;
+  if(m&&m.phase!=='round'){if(renderTeamMirror(room))return;}
   const v=TEAMVIEW;if(!v){el('tBody').innerHTML='<p>Waiting for your teacher…</p>';return;}
   el('tTitle').textContent=v.name;
   el('tKicker').textContent=room.round?('Round '+room.round+(v.weekend?' · WEEKEND':'')+' · '+v.days):'Waiting to start';
   if(!room.open){
+    if(m&&m.roundInfo){
+      const ri=m.roundInfo,tt=teamTimerText(room);
+      el('tTitle').textContent=ri.title;el('tKicker').textContent=ri.kicker;
+      el('tBody').innerHTML=`<div class="speech wide">${ri.speech}</div>
+        ${ri.due&&ri.due.length?`<div class="due"><div class="lbl">Due at the end of this round</div><ul>
+          ${ri.due.map(x=>`<li>${x.name} <span>${x.day} · ${x.h} hours</span></li>`).join('')}</ul></div>`
+          :'<div class="due none"><div class="lbl">Due this round</div><div class="big">Nothing.</div></div>'}
+        ${tt?`<div class="timerwrap"><div class="timer ${tt.cls}">${tt.txt}</div></div>`:''}`;
+      el('tSubmit').style.display='none';setTxt('tNote','');return;
+    }
     el('tBody').innerHTML='<div class="card"><h3>Waiting for the next round</h3><p>Your teacher will open it shortly.</p></div>';
     el('tSubmit').style.display='none';setTxt('tNote','');return;
   }
@@ -1015,7 +1142,9 @@ function renderTeam(room){
     if(teamUsed()>v.avail+teamBonus()){TEAMENTRY.states[id]=(TEAMENTRY.states[id]||0)-dd;if(!TEAMENTRY.states[id])delete TEAMENTRY.states[id];}
     renderTeam(room);});
   el('tSubmit').style.display='inline-block';
-  setTxt('tNote',left>0?(left+' hours still unspent'):'All hours spent');
+  const tt=teamTimerText(room);
+  setHtml('tNote',(tt?`<span class="minitimer ${tt.cls}">${tt.txt}</span>&nbsp;&nbsp;`:'')+
+    (left>0?(left+' hours still unspent'):'All hours spent'));
 }
 function teamSubmit(){
   LIVE.db.ref('rooms/'+LIVE.code+'/subs/'+TEAMROUND+'/'+LIVE.teamIx)
@@ -1381,7 +1510,7 @@ function renderData(){
   el('dRef').innerHTML=d.ref||'';
   setNote('dNote',d.note);
   el('dDots').innerHTML=D.map((_,i)=>`<i class="${i<=S.dStep?'on':''}"></i>`).join('');
-  el('dPrev').disabled=S.dStep===0;
+  el('dPrev').disabled=false;
   el('dNext').textContent=S.dStep>=D.length-1?'Continue':'Next';
   document.querySelectorAll('.bigstat[data-n]').forEach((el,i)=>setTimeout(()=>countUp(el,+el.dataset.n,900),250+i*150));
   if(d.fx==='impact')setTimeout(impact,180);
@@ -1390,8 +1519,10 @@ function renderData(){
 el('dNext').onclick=()=>{
   const D=DATA();
   if(S.dStep>=D.length-1){S.phase='script';S.scriptStep=0;save();render();}
-  else{S.dStep++;save();renderData();}};
-el('dPrev').onclick=()=>{S.dStep--;save();renderData();};
+  else{S.dStep++;save();renderData();liveMirror();}};
+el('dPrev').onclick=()=>{
+  if(S.dStep===0){S.phase='stand';save();render();}
+  else{S.dStep--;save();renderData();liveMirror();}};
 
 /* ================= DEBRIEF ================= */
 const SCRIPT=[
@@ -1493,10 +1624,11 @@ function renderScript(){
   el('scriptRef').innerHTML=st.ref||'';
   setNote('scriptNote',st.note);
   el('scriptDots').innerHTML=SCRIPT.map((_,i)=>`<i class="${i<=S.scriptStep?'on':''}"></i>`).join('');
-  el('scriptPrev').disabled=S.scriptStep===0;
+  el('scriptPrev').disabled=false;
   const last=S.scriptStep>=SCRIPT.length-1;
   el('scriptNext').disabled=last;
   el('scriptNext').style.display=last?'none':'inline-block';
+  el('scriptPrev').style.display='inline-block';
   el('endBtn').style.display=last?'inline-block':'none';
 }
 el('endBtn').onclick=()=>{showScreen('s-end');el('crumb').textContent='End of session';renderEndPreview();};
@@ -1504,7 +1636,9 @@ el('endBack').onclick=()=>{showScreen('s-script');el('crumb').textContent='Debri
 el('saveSession').onclick=saveSession;
 el('downloadCsv').onclick=downloadCsv;
 el('scriptNext').onclick=()=>{S.scriptStep++;save();renderScript();};
-el('scriptPrev').onclick=()=>{S.scriptStep--;save();renderScript();};
+el('scriptPrev').onclick=()=>{
+  if(S.scriptStep===0){S.phase='data';S.dStep=DATA().length-1;save();render();}
+  else{S.scriptStep--;save();renderScript();}};
 
 /* ================= END OF SESSION ================= */
 function sessionSummary(){
@@ -1602,7 +1736,12 @@ function drawTimer(){
   const b=document.getElementById('timerStart');
   if(b)b.textContent=tInt?'Pause':(tLeft<=0?'Restart':(tLeft<TIMER_SECS?'Resume':'Start 90s'));
 }
-function timerStop(){if(tInt){clearInterval(tInt);tInt=null;}}
+function timerStop(){if(tInt){clearInterval(tInt);tInt=null;}livePushTimer(false);}
+function livePushTimer(running){
+  if(!LIVE.on||LIVE.role!=='mentor')return;
+  const v=running?{running:true,endsAt:Date.now()+tLeft*1000}:{running:false,left:tLeft};
+  liveRef('timer').set(v).catch(()=>{});
+}
 function timerStart(){
   if(tInt)return;
   if(tLeft<=0)tLeft=TIMER_SECS;
@@ -1611,10 +1750,11 @@ function timerStart(){
     if(tLeft===0){timerStop();drawTimer();impact();burst('TIME','cards down','var(--coral)');return;}
     drawTimer();
   },1000);
+  livePushTimer(true);
   drawTimer();
 }
 function timerToggle(){if(tInt)timerStop();else timerStart();drawTimer();}
-function timerReset(){timerStop();tLeft=TIMER_SECS;drawTimer();}
+function timerReset(){timerStop();tLeft=TIMER_SECS;livePushTimer(false);drawTimer();}
 
 /* ================= PRINT ================= */
 const HOURS_R=[11,17,11,17];
@@ -1731,8 +1871,11 @@ function renderPrint(mode){
 }
 
 /* ================= CHROME ================= */
-el('printSheetBtn').onclick=()=>{renderPrint('sheets');window.print();};
-el('printCardBtn').onclick=()=>{renderPrint('cards');window.print();};
+/* Paper fallback. Not shown in the interface — open the app with ?print
+   on the end of the address if you ever need printed sheets. */
+if(location.search.indexOf('print')>-1){
+  window.addEventListener('load',()=>{renderPrint('sheets');window.print();});
+}
 el('resetBtn').onclick=async()=>{
   if(!confirm('Clear everything and start again?'))return;
   S=null;await wipe();
@@ -1742,6 +1885,7 @@ function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classL
 if(location.search.indexOf('team')>-1){window.addEventListener('load',()=>{showScreen('s-team');el('crumb').textContent='Team';});}
 function render(anim){
   if(!S){showScreen('s-setup');return;}
+  liveMirror();
   const p=S.phase;
   if(p==='brief'){showScreen('s-brief');renderBrief();}
   else if(p==='round'){showScreen('s-round');renderRound(anim);}
@@ -1756,7 +1900,7 @@ document.addEventListener('keydown',e=>{
   if(e.key==='ArrowLeft'){const b=document.querySelector('.screen.on .foot .btn.ghost');if(b&&!b.disabled)b.click();}
 });
 (async function init(){
-  renderSetup();renderPrint('sheets');drawTimer();
+  renderSetup();drawTimer();
   const saved=await load();
   if(saved&&saved.teams&&saved.phase!=='setup'&&confirm('A session is already in progress. Resume it?'))S=saved;
   render();

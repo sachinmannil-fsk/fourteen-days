@@ -46,22 +46,22 @@ Students understand that finishing a task removes the stressor but does not reso
 
 ## 4. Before the day
 
-**Print.** Open the app, press **Print sheets**. Six pages — one team sheet per team, plus one unplanned event page. Nothing to cut except the unplanned events.
+**Nothing to print.** Teams play on their own laptops.
 
-**Round 3 cards.** If teams are playing on their own laptops you do not need these — each team sees theirs on screen. If anyone is on paper, cut the five from the last printed page and hand them out in Round 3, matching what the app shows for that team.
+**Click through the app once.** Press **Read the briefing** on the setup screen — it holds the card explanations, answers to likely questions, and safeguarding notes. It is the only screen not meant for the projector.
 
-**Click through the app once.** Press **Read the briefing** on the setup screen. That screen holds the card explanations, answers to likely questions, and safeguarding notes. It is the only screen not meant for the projector.
+**Check you can get online.** Open the app on the laptop you will use, on school wifi, and press **Go live**. If a room code appears, you are ready.
 
-**On the day, before students arrive:** open the app, enter team names, press **Fullscreen**, put one team sheet on each table face down.
+**On the day, before students arrive:** open the app, enter team names, press **Fullscreen**, then **Go live**. Copy the join message and send it to the class, or write the link and code on the board.
 
----
+**Ask each team to nominate one laptop.** One person per team joins and submits. This matters — five students from the same team joining separately means only the last submission counts.
 
 ## 5. Run sheet
 
 | Time | Screen | What you do |
 |---|---|---|
-| 0–3 min | Opening (5 screens) | Advance with Next. Hand out team sheets on screen 2. Screen 5 explains the entry layout — pause there. |
-| 3–7 min | Round 1 | Press **Enter cards** — the timer starts itself. Walk the room, tap what each team played. Press **Score round**. |
+| 0–3 min | Opening (6 screens) | Advance with Next. Make sure every team has joined before you leave the opening. Screen 6 explains the card layout — pause there. |
+| 3–7 min | Round 1 | Press **Enter cards** — this opens the round to the teams and starts the timer. Watch the submitted list. Press **Score round**. |
 | 7–8 min | Standings | Let them look. **Next round**. |
 | 8–12 min | Round 2 (weekend) | Same. Nothing is due this round. |
 | 12–17 min | Round 3 | Something unplanned comes up for each team, shown on their own screen. |
@@ -76,7 +76,7 @@ Students understand that finishing a task removes the stressor but does not reso
 
 Almost nothing. These moments are yours:
 
-**Handing out sheets:** *"One sheet per team. Don't fill anything in yet."*
+**As they join:** *"One laptop per team. Whoever is on it submits for everyone."*
 
 **Round 3:** *"Something's come up for each of you. That's the round. Play it."* Nothing more.
 
@@ -108,11 +108,15 @@ Then move on. **Do not invite anyone to share, do not pause for volunteers, do n
 
 **"Is Round 3 even possible?"** — Don't answer, but know that it is. Twelve hours of work are due against eight free hours. A team that plays **cut sleep to catch up** gets exactly twelve. It works — and it costs them roughly sixty energy, which collapses their final weekend. That decision is the entire session in miniature.
 
-**"Where did that research come from?"** — The sources are printed at the bottom-left of each debrief screen. Point at them.
+**"Where did that research come from?"** — The sources appear at the bottom-left of each debrief screen. Point at them.
 
 ---
 
 ## 9. If something goes wrong
+
+**A team can't join.** Check they typed the code correctly and are on the right link. If it still fails, **enter their cards yourself** on the entry screen — it works exactly as it always did.
+
+**The network drops entirely.** Same answer. Ask each team what they played and enter it. Nothing is lost and the session continues. Say this to the class calmly; they take their cue from you.
 
 **A team plays nothing.** Fine — they still score homework points minus any missed deadline.
 
@@ -122,11 +126,9 @@ Then move on. **Do not invite anyone to share, do not pause for volunteers, do n
 
 **The class is flat.** Don't try to lift it. Get to the data screens; the weekend bars do the work.
 
-**Rules argument mid-round.** *"Play it however you read it."* Momentum matters more than consistency between tables.
+**A task disappeared from a team's list.** Its deadline passed — it shows struck through with the penalty. Half-done work stays available with a **Finish** button until its deadline.
 
-**A task disappeared from the list.** Its deadline passed — it shows struck through with the penalty. Half-done work stays available with a **Finish** button until its deadline.
-
----
+**You need to go back.** Back works on every screen, including across the data and debrief screens.
 
 ## 10. Safeguarding
 

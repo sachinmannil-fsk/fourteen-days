@@ -2,7 +2,8 @@
 
 A 35-minute team strategy game and facilitated debrief for senior students, on stress, recovery and where a fortnight is actually won.
 
-**Live app:** `https://YOUR-USERNAME.github.io/fourteen-days/`
+**Mentor:** `https://YOUR-USERNAME.github.io/fourteen-days/`
+**Teams:** same address with `?team` on the end
 
 ---
 
@@ -12,7 +13,7 @@ Open the link. Everything you need is on screen.
 
 1. Enter team names, press **Read the briefing**, then **Fullscreen**.
 2. Advance with **Next**. The app talks to the students; you enter what each team plays.
-3. Print team sheets from the **Print sheets** button before the day.
+3. Press **Go live**, then send the class the join link and code.
 
 Read `MENTOR-GUIDE.md` once before you facilitate.
 
@@ -40,9 +41,9 @@ To update later, upload a new `index.html` over the old one. Everyone gets the n
 
 **Two ways to run it.**
 
-*Default (no setup):* single mentor laptop and projector, teams play with paper sheets, mentor enters the cards.
+*Live mode (set up):* each team submits from their own laptop. The mentor opens each round, watches submissions arrive, and can override anything. See `SETUP-LIVE.md`.
 
-*Live mode (optional):* each team submits from their own laptop and the mentor just watches submissions arrive. Needs a free Firebase project — see `SETUP-LIVE.md`. **If live mode fails on the day, manual entry still works and nothing is lost.**
+*Fallback:* if the network fails, the mentor enters the cards on their own screen exactly as before. **Nothing is lost and the session continues.**
 
 **Clearing a session:** press **Reset** in the top bar. Use this between class sections, or the next class will be offered the previous one's game.
 
