@@ -542,6 +542,30 @@ svg.echart{width:100%;height:auto;max-height:26vh}
   </div></div>
 </section>
 
+<!-- END OF SESSION -->
+<section class="screen" id="s-end">
+  <div class="stage scrolly">
+    <div class="kicker">End of session</div>
+    <h1 class="headline" style="font-size:clamp(24px,5.4vh,44px)">Save this class</h1>
+    <div class="rule"></div>
+    <div class="card" style="max-width:560px">
+      <h3>Which class was this?</h3>
+      <input id="classLabel" class="linkin" style="width:100%;margin:.6vh 0" placeholder="e.g. 12A" autocomplete="off">
+      <p class="small dim">Team names and scores only. No student names are recorded.</p>
+      <div class="row" style="margin-top:1vh">
+        <button class="btn" id="saveSession">Save</button>
+        <button class="btn ghost sm" id="downloadCsv">Download spreadsheet</button>
+        <button class="btn ghost sm" id="endBack">Back</button>
+      </div>
+      <p class="small" id="saveMsg" style="margin-top:.9vh"></p>
+    </div>
+    <div class="card" style="max-width:560px;margin-top:14px">
+      <h3>What gets saved</h3>
+      <div id="endPreview"></div>
+    </div>
+  </div>
+</section>
+
 <!-- STANDINGS -->
 <section class="screen" id="s-stand">
   <div class="stage">
@@ -601,7 +625,8 @@ svg.echart{width:100%;height:auto;max-height:26vh}
     <div class="foot-left"><div class="stepdots" id="scriptDots"></div><div class="note" id="scriptNote"></div></div>
     <div class="foot-right">
       <button class="btn ghost sm" id="scriptPrev">Back</button>
-      <button class="btn" id="scriptNext">Next</button></div>
+      <button class="btn" id="scriptNext">Next</button>
+      <button class="btn" id="endBtn" style="display:none">End session</button></div>
   </div></div>
 </section>
 
@@ -757,7 +782,7 @@ function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor
 /* Progress is saved in the browser on this device only.
    Uses localStorage when available (normal hosting or a local file),
    and falls back to the Claude storage API when running inside Claude. */
-const SKEY='fourteendays:v33';
+const SKEY='fourteendays:v34';
 const HAS_LS=(()=>{try{const k='__t';localStorage.setItem(k,'1');localStorage.removeItem(k);return true;}catch(e){return false;}})();
 async function save(){
   const v=JSON.stringify(S);
@@ -1468,10 +1493,99 @@ function renderScript(){
   setNote('scriptNote',st.note);
   el('scriptDots').innerHTML=SCRIPT.map((_,i)=>`<i class="${i<=S.scriptStep?'on':''}"></i>`).join('');
   el('scriptPrev').disabled=S.scriptStep===0;
-  el('scriptNext').disabled=S.scriptStep>=SCRIPT.length-1;
+  const last=S.scriptStep>=SCRIPT.length-1;
+  el('scriptNext').disabled=last;
+  el('scriptNext').style.display=last?'none':'inline-block';
+  el('endBtn').style.display=last?'inline-block':'none';
 }
+el('endBtn').onclick=()=>{showScreen('s-end');el('crumb').textContent='End of session';renderEndPreview();};
+el('endBack').onclick=()=>{showScreen('s-script');el('crumb').textContent='Debrief';};
+el('saveSession').onclick=saveSession;
+el('downloadCsv').onclick=downloadCsv;
 el('scriptNext').onclick=()=>{S.scriptStep++;save();renderScript();};
 el('scriptPrev').onclick=()=>{S.scriptStep--;save();renderScript();};
+
+/* ================= END OF SESSION ================= */
+function sessionSummary(){
+  const st=stats();
+  return{
+    savedAt:new Date().toISOString(),
+    classLabel:(el('classLabel').value||'').trim()||'unnamed',
+    room:LIVE.code||null,
+    teamCount:S.teams.length,
+    classTotals:{
+      weekendHoursGiven:st.tot,
+      weekendHoursUnused:st.lost,
+      hoursScrollingAlone:st.scroll,
+      hoursLaughingWithSomeone:st.laugh,
+      hoursRecovering:st.rec,
+      deadlinesMissed:st.missed,
+      teamsFinishingEverything:0
+    },
+    teams:S.teams.map(t=>({
+      name:t.name,
+      total:t.total,
+      scoresByRound:t.scores,
+      energyByRound:t.hist,
+      finalEnergy:t.energy,
+      weekendGiven:st.wkAvail(t),
+      weekendUsed:st.wkUsed(t),
+      missedDeadlines:t.missed.length,
+      extensionGranted:!!t.ext,
+      cardsPlayed:t.played,
+      sleepChoices:t.sleepLog,
+      roundChoices:t.logs
+    }))
+  };
+}
+function renderEndPreview(){
+  const d=sessionSummary(),c=d.classTotals;
+  el('endPreview').innerHTML=`<table>
+   <tr><td>Weekend hours the class was given</td><td class="num">${c.weekendHoursGiven}</td></tr>
+   <tr><td>Weekend hours unused</td><td class="num neg">${c.weekendHoursUnused}</td></tr>
+   <tr><td>Hours scrolling alone</td><td class="num">${c.hoursScrollingAlone}</td></tr>
+   <tr><td>Hours laughing with someone</td><td class="num">${c.hoursLaughingWithSomeone}</td></tr>
+   <tr><td>Hours recovering</td><td class="num pos">${c.hoursRecovering}</td></tr>
+   <tr><td>Deadlines missed</td><td class="num neg">${c.deadlinesMissed}</td></tr>
+   <tr><td>Teams</td><td class="num">${d.teamCount}</td></tr></table>
+   <p class="small dim" style="margin-top:.6vh">Plus each team's scores, energy, choices and weekend use.</p>`;
+}
+function csvEscape(v){v=String(v==null?'':v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}
+function sessionCsv(){
+  const d=sessionSummary(),rows=[];
+  rows.push(['Class',d.classLabel]);rows.push(['Saved',d.savedAt]);rows.push([]);
+  rows.push(['CLASS TOTALS']);
+  Object.entries(d.classTotals).forEach(([k,v])=>rows.push([k,v]));
+  rows.push([]);
+  rows.push(['Team','Total','Final energy','Weekend given','Weekend used','Missed','Extension',
+    'R1','R2','R3','R4','Choices R1','Choices R2','Choices R3','Choices R4']);
+  d.teams.forEach(t=>rows.push([t.name,t.total,t.finalEnergy,t.weekendGiven,t.weekendUsed,
+    t.missedDeadlines,t.extensionGranted?'yes':'no',
+    ...(t.scoresByRound||[]),...Array(Math.max(0,4-(t.scoresByRound||[]).length)).fill(''),
+    ...(t.roundChoices||[])]));
+  return rows.map(r=>r.map(csvEscape).join(',')).join('\n');
+}
+function downloadCsv(){
+  const d=sessionSummary();
+  const blob=new Blob([sessionCsv()],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='fourteen-days-'+d.classLabel.replace(/[^A-Za-z0-9]/g,'')+'-'+d.savedAt.slice(0,10)+'.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTxt('saveMsg','Spreadsheet downloaded.');
+}
+function saveSession(){
+  const d=sessionSummary();
+  downloadCsv();
+  if(!liveInit()){
+    el('saveMsg').innerHTML='<b>Spreadsheet downloaded.</b> Online saving is not set up, so keep that file.';
+    return;
+  }
+  const key=d.savedAt.slice(0,10)+'_'+d.classLabel.replace(/[^A-Za-z0-9]/g,'')+'_'+Math.random().toString(36).slice(2,6);
+  LIVE.db.ref('results/'+key).set(d)
+    .then(()=>el('saveMsg').innerHTML='<b style="color:var(--teal)">Saved, and the spreadsheet has downloaded.</b>')
+    .catch(e=>{console.warn(e);el('saveMsg').innerHTML='<b style="color:var(--coral)">Could not save online.</b> The spreadsheet downloaded — keep that file.';});
+}
 
 /* ================= TIMER ================= */
 const TIMER_SECS=90;
