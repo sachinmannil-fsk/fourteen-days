@@ -77,6 +77,9 @@ main{flex:1;min-height:0;display:flex;flex-direction:column}
 .tpick{border:2px solid var(--line-2);background:var(--panel);color:var(--ink);padding:.7vh 15px;border-radius:7px;
   cursor:pointer;font-size:clamp(14px,1.9vh,17px);font-weight:700}
 .tpick.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.tpick.taken{opacity:.5;border-style:dashed;background:var(--panel-2);color:var(--muted)}
+.tpick .jt{font-family:var(--mono);font-size:.72em;font-weight:600;letter-spacing:.08em;
+  text-transform:uppercase;margin-left:7px;opacity:.85}
 .legrow{display:flex;align-items:center;gap:14px;padding:.75vh 0;border-bottom:1px solid var(--line)}
 .legrow:last-child{border-bottom:0}
 .legkey{flex:0 0 108px;display:flex;gap:4px;align-items:center;justify-content:flex-start}
@@ -780,7 +783,7 @@ function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor
 /* Progress is saved in the browser on this device only.
    Uses localStorage when available (normal hosting or a local file),
    and falls back to the Claude storage API when running inside Claude. */
-const SKEY='fourteendays:v38';
+const SKEY='fourteendays:v40';
 const HAS_LS=(()=>{try{const k='__t';localStorage.setItem(k,'1');localStorage.removeItem(k);return true;}catch(e){return false;}})();
 async function save(){
   const v=JSON.stringify(S);
@@ -809,7 +812,7 @@ function setNote(id,txt){const el=document.getElementById(id);if(!el)return;el.i
    If this is not configured, or the network fails, everything
    falls back to manual entry and nothing breaks.
    ============================================================ */
-const LIVE={on:false,code:null,db:null,role:null,teamIx:null,subs:{},ready:false};
+const LIVE={on:false,code:null,db:null,role:null,teamIx:null,subs:{},joined:{},ready:false};
 
 function liveConfigured(){return !!(FIREBASE_CONFIG&&FIREBASE_CONFIG.databaseURL);}
 function liveInit(){
@@ -872,8 +875,8 @@ function liveMirror(){
 }
 function livePublish(){
   if(!LIVE.on)return;
-  const r=S.round,payload={round:r,open:true,at:Date.now(),teams:{}};
-  S.teams.forEach((tm,i)=>payload.teams[i]=viewFor(tm,r));
+  const r=S.round,payload={round:r,open:true,at:Date.now(),views:{}};
+  S.teams.forEach((tm,i)=>payload.views[i]=viewFor(tm,r));
   liveRef().update(payload).catch(e=>console.warn('publish failed',e));
 }
 function liveClose(){if(LIVE.on)liveRef('open').set(false).catch(()=>{});}
@@ -916,6 +919,11 @@ function goLive(){
       el('goLiveBtn').textContent='Live: '+LIVE.code;
       el('goLiveBtn').disabled=true;
       liveListenSubs();
+      liveRef('teams').on('value',snap=>{
+        const t=snap.val()||{};LIVE.joined={};
+        Object.keys(t).forEach(k=>{if(t[k].holder)LIVE.joined[k]=true;});
+        if(S&&S.phase==='round'&&roundView==='entry')renderRound();
+      });
     })
     .catch(e=>{LIVE.on=false;el('liveStatus').innerHTML='<b style="color:var(--coral)">Could not connect.</b> Carry on with manual entry.';console.warn(e);});
 }
@@ -939,22 +947,43 @@ function copyText(txt,okMsg){
 function names_current(){return names.map((n,i)=>n.trim()||('Team '+(i+1)));}
 
 /* ---- team side ---- */
+function clientId(){
+  let id=null;
+  try{id=localStorage.getItem('fd:client');}catch(e){}
+  if(!id){id=Math.random().toString(36).slice(2,10);try{localStorage.setItem('fd:client',id);}catch(e){}}
+  return id;
+}
+const CLIENT=clientId();
+function paintTeamList(t){
+  if(!t){el('joinMsg').innerHTML='<b style="color:var(--coral)">No room with that code.</b> Check with your teacher.';return;}
+  el('joinMsg').textContent='Which team are you?';
+  el('joinTeams').innerHTML=Object.keys(t).map(ix=>{
+    const holder=t[ix].holder;
+    const mine=holder&&holder===CLIENT;
+    const taken=holder&&!mine;
+    return `<button class="tpick ${mine?'on':''} ${taken?'taken':''}" data-join="${ix}">${t[ix].name}
+      ${mine?'<span class="jt">yours</span>':taken?'<span class="jt">taken</span>':''}</button>`;
+  }).join('');
+  document.querySelectorAll('[data-join]').forEach(b=>b.onclick=()=>{
+    const ix=+b.dataset.join, holder=(t[ix]||{}).holder;
+    if(holder&&holder!==CLIENT&&
+       !confirm('Someone is already on '+t[ix].name+'. Join as this team anyway? Their screen will stop submitting.'))return;
+    claimTeam(ix);
+  });
+}
+function claimTeam(ix){
+  LIVE.teamIx=ix;LIVE.on=true;
+  LIVE.db.ref('rooms/'+LIVE.code+'/teams/'+ix+'/holder').set(CLIENT).catch(()=>{});
+  el('teamJoin').style.display='none';el('teamPlay').style.display='block';
+  el('liveChip').textContent='ROOM '+LIVE.code;el('liveChip').classList.add('on');
+  teamWatch();
+}
 function teamJoin(code){
   if(!liveInit()){el('joinMsg').innerHTML='<b style="color:var(--coral)">This link is not set up for live rooms.</b>';return;}
   LIVE.code=code.toUpperCase();LIVE.role='team';
-  LIVE.db.ref('rooms/'+LIVE.code+'/teams').get().then(snap=>{
-    const t=snap.val();
-    if(!t){el('joinMsg').innerHTML='<b style="color:var(--coral)">No room with that code.</b> Check with your teacher.';return;}
-    el('joinMsg').textContent='Which team are you?';
-    el('joinTeams').innerHTML=Object.keys(t).map(ix=>
-      `<button class="tpick" data-join="${ix}" style="margin:4px 4px 0 0">${t[ix].name}</button>`).join('');
-    document.querySelectorAll('[data-join]').forEach(b=>b.onclick=()=>{
-      LIVE.teamIx=+b.dataset.join;LIVE.on=true;
-      el('teamJoin').style.display='none';el('teamPlay').style.display='block';
-      el('liveChip').textContent='ROOM '+LIVE.code;el('liveChip').classList.add('on');
-      teamWatch();
-    });
-  }).catch(e=>{
+  LIVE.db.ref('rooms/'+LIVE.code+'/teams').on('value',snap=>{
+    if(LIVE.teamIx===null||LIVE.teamIx===undefined)paintTeamList(snap.val());
+  },e=>{
     el('joinMsg').innerHTML='<b style="color:var(--coral)">Could not connect.</b> The room may be full, or the network is blocking it. <b>Tell your teacher — they can enter your cards instead.</b>';
     console.warn(e);});
 }
@@ -970,7 +999,7 @@ function teamWatch(){
   },1000);
   LIVE.db.ref('rooms/'+LIVE.code).on('value',snap=>{
     const room=snap.val();if(!room)return;
-    const v=(room.teams||{})[LIVE.teamIx];
+    const v=(room.views||{})[LIVE.teamIx];
     if(room.round!==TEAMROUND){TEAMROUND=room.round;TEAMENTRY={tasks:{},states:{},sleep:'normal'};}
     TEAMROOM=room;TEAMVIEW=v;renderTeam(room);
   });
@@ -1266,9 +1295,11 @@ function renderRound(anim){
     renderEntry();
     if(LIVE.on&&LIVE.role==='mentor'){
       el('entryStatus').innerHTML='<span class="subgrid">'+S.teams.map((t,i)=>{
-        const inn=t.submitted;
+        const inn=t.submitted, joined=LIVE.joined&&LIVE.joined[i];
+        const label=inn?'submitted ✓':(joined?'joined, choosing…':'not joined yet');
+        const col=inn?'var(--teal)':(joined?'var(--ink-2)':'var(--coral)');
         return `<span class="subrow ${inn?'in':''}"><span class="nm">${t.name}</span>
-          <span class="st" style="color:${inn?'var(--teal)':'var(--muted)'}">${inn?'submitted ✓':'waiting…'}</span></span>`;
+          <span class="st" style="color:${col}">${label}</span></span>`;
       }).join('')+'</span>';
     } else {
       el('entryStatus').textContent=
