@@ -459,7 +459,7 @@ svg.echart{width:100%;height:auto;max-height:26vh}
         </div>
         <div class="card">
           <h3>Safeguarding</h3>
-          <p class="small">The session ends on the envelope screen — the one that says some students carry things school never sees. <b>Say that one aloud in your own words.</b> Do not invite anyone to share and do not look at any particular student.</p>
+          <p class="small">The session ends on the last screen — the one that says some students carry things school never sees. <b>Say that one aloud in your own words.</b> Do not invite anyone to share and do not look at any particular student.</p>
           <p class="small"><b>There is no exit slip in this version.</b> That means the session has no private route for a student who is struggling but will not say so. Watch the room during the debrief and pass any concerns to the counsellor the same day.</p>
           <p class="small">If a student tells you something serious directly: listen, do not react, do not promise secrecy, pass it on that day.</p>
         </div>
@@ -725,8 +725,8 @@ const ROUNDS=[
   speech:`<p><b>Eleven hours</b> across five days. About two a night.</p><p>Homework takes three of them before you start.</p>`},
  {n:2,days:'Days 6–7',sub:'THE WEEKEND',we:true,burst:'WEEKEND',bsub:'Days 6 and 7',
   speech:`<p>Two free days. <em>Up to seventeen hours.</em></p><p>More than the entire week you just played.</p>`},
- {n:3,days:'Days 8–12',sub:'Monday to Friday',we:false,burst:'ROUND 3',bsub:'Open your envelopes',
-  speech:`<p>Eleven hours again.</p><p><b>Open your envelope first.</b> Whatever is inside is yours.</p>`},
+ {n:3,days:'Days 8–12',sub:'Monday to Friday',we:false,burst:'ROUND 3',bsub:'Something has come up',
+  speech:`<p>Eleven hours again.</p><p><b>Something has come up for each team.</b> It is on your screen &mdash; different for everyone.</p>`},
  {n:4,days:'Days 13–14',sub:'THE WEEKEND',we:true,burst:'FINAL WEEKEND',bsub:'Last round',
   speech:`<p>The last weekend.</p><p><b>This is the last round you get.</b></p>`}
 ];
@@ -782,7 +782,7 @@ function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor
 /* Progress is saved in the browser on this device only.
    Uses localStorage when available (normal hosting or a local file),
    and falls back to the Claude storage API when running inside Claude. */
-const SKEY='fourteendays:v34';
+const SKEY='fourteendays:v36';
 const HAS_LS=(()=>{try{const k='__t';localStorage.setItem(k,'1');localStorage.removeItem(k);return true;}catch(e){return false;}})();
 async function save(){
   const v=JSON.stringify(S);
@@ -1108,7 +1108,7 @@ function renderRound(anim){
 
   const foot=document.getElementById('roundFoot');
   if(roundView==='brief'){
-    const env=S.round===3?'<div class="note"><b>Round 3:</b> hand each team their sealed envelope before starting the timer.</div>':'<div class="note"></div>';
+    const env=S.round===3?'<div class="note"><b>Round 3:</b> each team gets something unplanned. It appears on their own screen.</div>':'<div class="note"></div>';
     foot.innerHTML=`<div class="foot-left">${env}</div>
       <div class="foot-right">
       <button class="btn ghost sm" id="timerReset">Reset</button>
@@ -1166,7 +1166,7 @@ function renderEntry(){
    <div class="epanel">
     <div class="ehead">
       <div><h3 style="margin:0;font-size:clamp(14px,1.36vh,15px)">${tm.name}</h3>
-      <span class="small dim mono">${used} of ${avail} hours${ev?' · '+ev.h+' from envelope':''}</span></div>
+      <span class="small dim mono">${used} of ${avail} hours${ev?' · '+ev.h+' unplanned':''}</span></div>
       <span class="locked">Homework 3h · 6pt</span></div>
     <div class="hourbar">${bar}</div>
     ${ev?`<p class="small" style="margin:0;color:var(--coral)">${ev.text}</p>`:''}
@@ -1423,10 +1423,11 @@ const SCRIPT=[
        <p>One hour midweek spent moving, sleeping properly, or actually being with someone is not an hour stolen from work. <b>It is what buys back the eight weekend hours you would otherwise lose.</b></p>`,
   ref:`<b>Source:</b> Walker, <em>Why We Sleep</em> (2017) and Diekelmann &amp; Born, <em>The memory function of sleep</em> (2010) — what you study is consolidated into memory while you sleep.`,
   note:'This is the one thing worth remembering. Leave it up a while.'},
- {kick:'One last thing',h:'The envelope',
+ {kick:'One last thing',h:'The thing you could not plan for',
   say:`<p>Some of what people are carrying never shows up on any school calendar. <span class="quiet">Nobody has to talk about theirs.</span></p>
-       <p>But notice who handled the envelope best.</p>
-       <p>It was not whoever worked hardest. <b>It was whoever had something left.</b></p>`,
+       <p>But notice who handled it best.</p>
+       <p>It was not whoever worked hardest. <b>It was the teams who still had energy in reserve</b> &mdash; the ones who had spent something on sleep, on moving, on people.</p>
+       <p class="quiet">When three hours disappeared, they could absorb it. The teams already running on empty could not.</p>`,
   note:'Worth saying this one out loud. This is the last screen.'}
 ];
 
@@ -1698,13 +1699,13 @@ function lifeStrips(){
         <span class="sdue">COPY ${i+1} OF 2</span></div>`;}});
   return h;
 }
-function envelopePage(){
+function unplannedPage(){
   return `<div class="psheet">
-    <div class="phead"><h2>Round 3 — sealed envelopes</h2>
-    <span class="psub">one per team · do not label them</span></div>
-    <p class="pnote">Cut these out and seal one in each envelope. <b>Do not write team names on them.</b>
+    <div class="phead"><h2>Round 3 — what comes up</h2>
+    <span class="psub">only needed if teams play on paper</span></div>
+    <p class="pnote"><b>If teams play on their own laptops you do not need this page</b> &mdash; each team sees theirs on screen. Otherwise cut these out and fold them.
     The app decides which team gets which event and shows it on the Round 3 screen — hand them out from there.</p>
-    ${EVENTS.map((e,i)=>`<div class="penv"><div class="pe-h">ENVELOPE ${i+1} · ROUND 3 · DO NOT OPEN EARLY</div>
+    ${EVENTS.map((e,i)=>`<div class="penv"><div class="pe-h">ROUND 3 · CARD ${i+1} · DO NOT OPEN EARLY</div>
       <div class="pe-t">${e.text}</div></div>`).join('')}</div>`;
 }
 function renderPrint(mode){
@@ -1725,7 +1726,7 @@ function renderPrint(mode){
   }else{
     list.forEach(nm=>{out+=strikeSheet(nm);});
   }
-  out+=envelopePage();
+  out+=unplannedPage();
   el('packOut').innerHTML=out;
 }
 

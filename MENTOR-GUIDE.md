@@ -46,9 +46,9 @@ Students understand that finishing a task removes the stressor but does not reso
 
 ## 4. Before the day
 
-**Print.** Open the app, press **Print sheets**. Six pages — one team sheet per team, plus one envelope page. Nothing to cut except the envelopes.
+**Print.** Open the app, press **Print sheets**. Six pages — one team sheet per team, plus one unplanned event page. Nothing to cut except the unplanned events.
 
-**Envelopes.** Cut the five event boxes from the last page and seal one in each envelope. **Do not write team names on them** — the app decides who gets which and shows it on the Round 3 screen.
+**Round 3 cards.** If teams are playing on their own laptops you do not need these — each team sees theirs on screen. If anyone is on paper, cut the five from the last printed page and hand them out in Round 3, matching what the app shows for that team.
 
 **Click through the app once.** Press **Read the briefing** on the setup screen. That screen holds the card explanations, answers to likely questions, and safeguarding notes. It is the only screen not meant for the projector.
 
@@ -64,7 +64,7 @@ Students understand that finishing a task removes the stressor but does not reso
 | 3–7 min | Round 1 | Press **Enter cards** — the timer starts itself. Walk the room, tap what each team played. Press **Score round**. |
 | 7–8 min | Standings | Let them look. **Next round**. |
 | 8–12 min | Round 2 (weekend) | Same. Nothing is due this round. |
-| 12–17 min | Round 3 | **Hand out envelopes first**, matching what the screen shows for each team. |
+| 12–17 min | Round 3 | Something unplanned comes up for each team, shown on their own screen. |
 | 17–21 min | Round 4 | Same. This is the crunch round. |
 | 21–25 min | Data (4 screens) | Advance slowly. Screen 1 matters most — give them time to find their own bar. |
 | 25–32 min | Debrief (5 screens) | Advance slowly. Let them read. |
@@ -78,11 +78,11 @@ Almost nothing. These moments are yours:
 
 **Handing out sheets:** *"One sheet per team. Don't fill anything in yet."*
 
-**Round 3 envelopes:** *"That's the round. Play it."* Nothing about what's inside.
+**Round 3:** *"Something's come up for each of you. That's the round. Play it."* Nothing more.
 
-**The envelope screen in the debrief.** The one place worth speaking rather than letting them read silently:
+**The last debrief screen.** The one place worth speaking rather than letting them read silently:
 
-> "Some of what people are carrying doesn't show up on any calendar this school makes. Nobody has to talk about theirs. But notice who handled the envelope best — it wasn't whoever worked hardest."
+> "Some of what people are carrying doesn't show up on any calendar this school makes. Nobody has to talk about theirs. But notice who handled it best. It wasn't whoever worked hardest — it was the teams who still had energy in reserve."
 
 Then move on. **Do not invite anyone to share, do not pause for volunteers, do not look at any particular student.**
 
